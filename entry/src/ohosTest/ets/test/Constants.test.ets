@@ -44,13 +44,16 @@ export default function constantsTest() {
     it('preference_keys_are_unique', 0, () => {
       const keys: string[] = [
         PreferencesConstants.KEY_THEME_MODE,
+        PreferencesConstants.KEY_THEME_COLOR,
+        PreferencesConstants.KEY_BACKGROUND_IMAGE_PATH,
         PreferencesConstants.KEY_LANGUAGE_MODE,
         PreferencesConstants.KEY_MATERIAL_TYPE,
         PreferencesConstants.KEY_MATERIAL_LEVEL,
         PreferencesConstants.KEY_IMMERSIVE_ON,
         PreferencesConstants.KEY_LIGHT_EFFECT,
         PreferencesConstants.KEY_GRIP_ENABLED,
-        PreferencesConstants.KEY_ANTI_PEEP_ENABLED
+        PreferencesConstants.KEY_ANTI_PEEP_ENABLED,
+        PreferencesConstants.KEY_VIDEO_PLAYBACK_RATE
       ];
       const unique: Set<string> = new Set<string>();
       for (const key of keys) {
@@ -69,6 +72,12 @@ export default function constantsTest() {
       // hideRatio 取值区间由系统约定为 [1.0, 3.0]。
       expect(CommonConstants.TITLE_BAR_HIDE_RATIO >= 1.0 && CommonConstants.TITLE_BAR_HIDE_RATIO <= 3.0).assertTrue();
       expect(CommonConstants.TITLE_BAR_BLUR_START_VP <= CommonConstants.TITLE_BAR_BLUR_END_VP).assertTrue();
+    });
+
+    it('short_content_gets_only_the_scroll_distance_needed_to_hide_title', 0, () => {
+      expect(CommonConstants.shortContentEndOffset(700, 300)).assertEqual(575);
+      expect(CommonConstants.shortContentEndOffset(700, 875)).assertEqual(0);
+      expect(CommonConstants.shortContentEndOffset(700, 900)).assertEqual(0);
     });
   });
 }

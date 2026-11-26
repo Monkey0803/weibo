@@ -13,6 +13,13 @@ export class ScrollerRegistry {
   readonly profile: Scroller = new Scroller();
   /** 设置页滚动控制器。 */
   readonly settings: Scroller = new Scroller();
+  readonly settingsAppearance: Scroller = new Scroller();
+  readonly settingsPrivacy: Scroller = new Scroller();
+  readonly hotSearch: Scroller = new Scroller();
+  readonly socialList: Scroller = new Scroller();
+  readonly repostList: Scroller = new Scroller();
+  readonly detail: Scroller = new Scroller();
+  readonly profilePage: Scroller = new Scroller();
 }
 
 /** 全局唯一实例。 */

@@ -1,17 +1,24 @@
-import { FeedKind, LoadState, WeiboPost } from '../model/WeiboModels';
+import { LoadState, WeiboPost } from '../model/WeiboModels';
 import { RouterConstants } from '../common/constants/RouterConstants';
 import { feedViewModel } from '../viewmodel/FeedViewModel';
 import { deviceService } from '../service/DeviceService';
 import { scrollers } from '../service/ScrollerRegistry';
 import { safeArea } from '../service/SafeAreaController';
+import { CommonConstants } from '../common/constants/CommonConstants';
 import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
 import { AppIcon } from './AppIcon';
+import { gripSensor } from '../service/GripSensor';
+import { GlassIconButton } from '../common/components/GlassIconButton';
 
 @ComponentV2
 export struct HomeTabView {
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Param underTitleBar: boolean = true;
+  @Local showBackToTop: boolean = false;
+  @Local viewportHeightVp: number = 0;
+  @Local statusHeightVp: number = 0;
+  @Local singlePostHeightVp: number = 0;
 
   aboutToAppear(): void {
     if (feedViewModel.state === LoadState.IDLE) {
@@ -23,24 +30,24 @@ export struct HomeTabView {
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_LOGIN, ''));
   }
 
-  @Builder
-  feedSelector() {
-    Row({ space: $r('app.float.space_s') }) {
-      Button($r('app.string.feed_following'))
-        .buttonStyle(feedViewModel.kind === FeedKind.FOLLOWING ? ButtonStyleMode.EMPHASIZED : ButtonStyleMode.TEXTUAL)
-        .onClick(() => feedViewModel.select(FeedKind.FOLLOWING))
-      Button($r('app.string.feed_hot'))
-        .buttonStyle(feedViewModel.kind === FeedKind.HOT ? ButtonStyleMode.EMPHASIZED : ButtonStyleMode.TEXTUAL)
-        .onClick(() => feedViewModel.select(FeedKind.HOT))
-      Blank()
-      Button() {
-        AppIcon({ source: $r('app.media.icon_refresh'), iconSize: $r('app.float.icon_size_small') })
-      }
-      .buttonStyle(ButtonStyleMode.TEXTUAL)
-      .accessibilityText($r('app.string.action_refresh'))
-      .onClick(() => feedViewModel.refresh())
+  private handleVisibleRange(endIndex: number): void {
+    const lastPostIndex: number = feedViewModel.posts.length;
+    if (!feedViewModel.loadMoreFailed && !feedViewModel.loadMoreAuthRequired &&
+      lastPostIndex > 0 && endIndex >= lastPostIndex - CommonConstants.AUTO_LOAD_MORE_THRESHOLD) {
+      feedViewModel.loadMore();
     }
-    .width('100%')
+  }
+
+  private updateBackToTopVisibility(): void {
+    const shouldShow: boolean =
+      scrollers.home.currentOffset().yOffset >= CommonConstants.BACK_TO_TOP_SHOW_OFFSET_VP;
+    if (this.showBackToTop !== shouldShow) {
+      this.showBackToTop = shouldShow;
+    }
+  }
+
+  private scrollToTop(): void {
+    scrollers.home.scrollToIndex(0, true, ScrollAlign.START);
   }
 
   @Builder
@@ -54,6 +61,8 @@ export struct HomeTabView {
       Column({ space: $r('app.float.space_m') }) {
         if (feedViewModel.authRequired) {
           Text($r('app.string.error_login_required')).fontColor($r('app.color.hm_error'))
+        } else if (feedViewModel.posts.length > 0) {
+          Text($r('app.string.refresh_failed_showing_previous')).fontColor($r('app.color.hm_error'))
         } else if (feedViewModel.errorMessage.length > 0) {
           Text(feedViewModel.errorMessage).fontColor($r('app.color.hm_error'))
         } else {
@@ -74,32 +83,92 @@ export struct HomeTabView {
 
   build() {
     ResponsiveContent() {
-      List({ scroller: scrollers.home }) {
-        ListItem() {
-          Column({ space: $r('app.float.space_m') }) {
-            Row().height(this.underTitleBar ? safeArea.contentTopInsetVp : 0)
-            this.feedSelector()
-            this.statusContent()
-          }.width('100%')
-        }
-        ForEach(feedViewModel.posts, (post: WeiboPost) => {
-          ListItem() { WeiboPostCard({ post: post, navPathStack: this.navPathStack }) }
-            .margin({ bottom: $r('app.float.space_m') })
-        }, (post: WeiboPost) => post.id)
-        if (feedViewModel.state === LoadState.READY && feedViewModel.hasMore) {
+      Stack({ alignContent: gripSensor.bottomAlign }) {
+        Refresh({ refreshing: feedViewModel.refreshing, promptText: $r('app.string.pull_to_refresh') }) {
+          List({ scroller: scrollers.home }) {
           ListItem() {
-            Button(feedViewModel.loadingMore ? $r('app.string.loading_more') : $r('app.string.action_refresh'))
-              .buttonStyle(ButtonStyleMode.TEXTUAL)
-              .enabled(!feedViewModel.loadingMore)
-              .onClick(() => feedViewModel.loadMore())
-              .width('100%')
+            Column({ space: $r('app.float.space_m') }) {
+              Row().height(this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0)
+                .margin({ bottom: $r('app.float.space_l') })
+              this.statusContent()
+            }.width('100%')
           }
+          .onAreaChange((_oldArea: Area, newArea: Area) => this.statusHeightVp = Number(newArea.height))
+          ForEach(feedViewModel.posts, (post: WeiboPost) => {
+            ListItem() { WeiboPostCard({ post: post, navPathStack: this.navPathStack }) }
+              .margin({ bottom: $r('app.float.space_m') })
+              .onAreaChange((_oldArea: Area, newArea: Area) => this.singlePostHeightVp = Number(newArea.height))
+          }, (post: WeiboPost) => post.id)
+          if (feedViewModel.posts.length === 0) {
+            ListItem() { Row().height(CommonConstants.shortContentScrollDistance(this.viewportHeightVp)) }
+          }
+          if (feedViewModel.loadingMore) {
+            ListItem() {
+              Row({ space: $r('app.float.space_s') }) {
+                LoadingProgress()
+                  .width($r('app.float.progress_size'))
+                  .height($r('app.float.progress_size'))
+                Text($r('app.string.loading_more'))
+                  .fontColor($r('app.color.hm_text_secondary'))
+              }
+              .width('100%')
+              .justifyContent(FlexAlign.Center)
+            }
+          } else if (feedViewModel.loadMoreFailed || feedViewModel.loadMoreAuthRequired) {
+            ListItem() {
+              Column({ space: $r('app.float.space_s') }) {
+                Text(feedViewModel.loadMoreAuthRequired
+                  ? $r('app.string.error_login_required')
+                  : (feedViewModel.loadMoreErrorMessage.length > 0
+                    ? feedViewModel.loadMoreErrorMessage : $r('app.string.error_api_unavailable')))
+                  .fontColor($r('app.color.hm_error'))
+                  .textAlign(TextAlign.Center)
+                if (feedViewModel.loadMoreAuthRequired) {
+                  Button($r('app.string.action_login')).onClick(() => this.login())
+                }
+                Button($r('app.string.action_retry'))
+                  .buttonStyle(ButtonStyleMode.TEXTUAL)
+                  .onClick(() => feedViewModel.loadMore())
+              }.width('100%').padding($r('app.float.space_m'))
+            }
+          }
+          }
+          .width('100%').height('100%')
+          .padding({ left: $r('app.float.space_l'), right: $r('app.float.space_l') })
+          .contentEndOffset(Math.max(deviceService.wide ? 0 : safeArea.contentBottomInsetVp,
+            feedViewModel.posts.length <= 1
+              ? CommonConstants.shortContentEndOffset(this.viewportHeightVp,
+                this.statusHeightVp + (feedViewModel.posts.length === 1 ? this.singlePostHeightVp :
+                  CommonConstants.shortContentScrollDistance(this.viewportHeightVp))) : 0))
+          .onAreaChange((_oldArea: Area, newArea: Area) => this.viewportHeightVp = Number(newArea.height))
+          .scrollBar(BarState.Off)
+          .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+          .onScrollIndex((_startIndex: number, endIndex: number, _centerIndex: number) => {
+            this.handleVisibleRange(endIndex);
+          })
+          .onDidScroll((_scrollOffset: number, _scrollState: ScrollState) => {
+            this.updateBackToTopVisibility();
+          })
+        }
+        .width('100%').height('100%')
+        .onRefreshing(() => feedViewModel.refresh())
+
+        if (this.showBackToTop) {
+          GlassIconButton({
+            icon: $r('sys.symbol.chevron_up'),
+            label: $r('app.string.action_back_to_top'),
+            controlId: 'home_back_to_top',
+            onTap: () => this.scrollToTop()
+          })
+            .margin({
+              left: $r('app.float.space_l'),
+              right: $r('app.float.space_l'),
+              bottom: deviceService.wide ? $r('app.float.space_l') : safeArea.contentBottomInsetVp
+            })
         }
       }
-      .width('100%').height('100%')
-      .padding({ left: $r('app.float.space_l'), right: $r('app.float.space_l') })
-      .contentEndOffset(deviceService.wide ? 0 : safeArea.contentBottomInsetVp)
-      .scrollBar(BarState.Off)
+      .width('100%')
+      .height('100%')
     }
   }
 }
