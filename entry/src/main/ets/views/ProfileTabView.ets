@@ -6,6 +6,7 @@ import { scrollers } from '../service/ScrollerRegistry';
 import { deviceService } from '../service/DeviceService';
 import { ResponsiveContent } from './ResponsiveContent';
 import { ProfileContent } from './ProfileContent';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct ProfileTabView {
@@ -31,9 +32,11 @@ export struct ProfileTabView {
         if (!authViewModel.loggedIn) {
           ListItem() {
             Column({ space: $r('app.float.space_l') }) {
-              SymbolGlyph($r('sys.symbol.person_crop_circle_fill'))
-                .fontSize($r('app.float.hero_icon_size'))
-                .fontColor([$r('app.color.hm_brand')])
+              AppIcon({
+                source: $r('app.media.icon_person'),
+                iconSize: $r('app.float.hero_icon_size'),
+                tint: $r('app.color.hm_brand')
+              })
               Text($r('app.string.profile_login_intro'))
                 .fontColor($r('app.color.hm_text_secondary'))
                 .textAlign(TextAlign.Center)

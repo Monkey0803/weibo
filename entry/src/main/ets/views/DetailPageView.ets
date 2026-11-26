@@ -6,6 +6,7 @@ import { safeArea } from '../service/SafeAreaController';
 import { notificationService } from '../service/NotificationService';
 import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct DetailPageView {
@@ -47,8 +48,10 @@ export struct DetailPageView {
     Row({ space: $r('app.float.space_m') }) {
       Button() {
         Row({ space: $r('app.float.space_s') }) {
-          SymbolGlyph(this.viewModel.post.liked ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
-            .fontSize($r('app.float.icon_size_small'))
+          AppIcon({
+            source: this.viewModel.post.liked ? $r('app.media.icon_heart_filled') : $r('app.media.icon_heart'),
+            iconSize: $r('app.float.icon_size_small')
+          })
           Text(this.viewModel.post.liked ? $r('app.string.action_unlike') : $r('app.string.action_like'))
         }
       }

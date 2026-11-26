@@ -34,6 +34,7 @@ import { LoginPageView } from '../views/LoginPageView';
 import { ProfilePageView } from '../views/ProfilePageView';
 import { VideoPageView } from '../views/VideoPageView';
 import { PrivacyVeil } from '../views/PrivacyVeil';
+import { AppIcon } from '../views/AppIcon';
 
 @Entry
 @ComponentV2
@@ -126,14 +127,14 @@ struct Index {
   tabShell() {
     HdsTabs({ controller: this.tabsController, index: this.currentTab }) {
       TabContent() { this.homeContent() }
-        .tabBar(this.barBuilder($r('sys.symbol.house'), $r('app.string.tab_home'), this.currentTab === TabIndex.HOME))
+        .tabBar(this.barBuilder($r('app.media.icon_house'), $r('app.string.tab_home'), this.currentTab === TabIndex.HOME))
       TabContent() { this.searchContent() }
-        .tabBar(this.barBuilder($r('sys.symbol.magnifyingglass'), $r('app.string.tab_search'), this.currentTab === TabIndex.SEARCH))
+        .tabBar(this.barBuilder($r('app.media.icon_magnifier'), $r('app.string.tab_search'), this.currentTab === TabIndex.SEARCH))
       TabContent() { this.profileContent() }
-        .tabBar(this.barBuilder($r('sys.symbol.person_crop_circle_fill'), $r('app.string.tab_profile'),
+        .tabBar(this.barBuilder($r('app.media.icon_person'), $r('app.string.tab_profile'),
           this.currentTab === TabIndex.PROFILE))
       TabContent() { this.settingsContent() }
-        .tabBar(this.barBuilder($r('sys.symbol.gearshape'), $r('app.string.tab_settings'), this.currentTab === TabIndex.SETTINGS))
+        .tabBar(this.barBuilder($r('app.media.icon_sliders'), $r('app.string.tab_settings'), this.currentTab === TabIndex.SETTINGS))
     }
     .barPosition(BarPosition.End)
     .barOverlap(true)
@@ -184,9 +185,11 @@ struct Index {
   @Builder
   barBuilder(icon: Resource, label: ResourceStr, active: boolean) {
     Column({ space: $r('app.float.space_xxs') }) {
-      SymbolGlyph(icon)
-        .fontSize($r('app.float.tab_icon_size'))
-        .fontColor([active ? $r('app.color.hm_brand') : $r('app.color.hm_text_secondary')])
+      AppIcon({
+        source: icon,
+        iconSize: $r('app.float.tab_icon_size'),
+        tint: active ? $r('app.color.hm_brand') : $r('app.color.hm_text_secondary')
+      })
       Text(label)
         .fontSize($r('app.float.tab_font_size'))
         .fontColor(active ? $r('app.color.hm_brand') : $r('app.color.hm_text_secondary'))

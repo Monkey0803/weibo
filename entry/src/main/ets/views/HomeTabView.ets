@@ -6,6 +6,7 @@ import { scrollers } from '../service/ScrollerRegistry';
 import { safeArea } from '../service/SafeAreaController';
 import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct HomeTabView {
@@ -33,10 +34,10 @@ export struct HomeTabView {
         .onClick(() => feedViewModel.select(FeedKind.HOT))
       Blank()
       Button() {
-        SymbolGlyph($r('sys.symbol.arrow_clockwise'))
-          .fontSize($r('app.float.icon_size_small'))
+        AppIcon({ source: $r('app.media.icon_refresh'), iconSize: $r('app.float.icon_size_small') })
       }
       .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .accessibilityText($r('app.string.action_refresh'))
       .onClick(() => feedViewModel.refresh())
     }
     .width('100%')

@@ -5,6 +5,7 @@ import { safeArea } from '../service/SafeAreaController';
 import { deviceService } from '../service/DeviceService';
 import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct SearchTabView {
@@ -30,8 +31,10 @@ export struct SearchTabView {
                 .layoutWeight(1)
                 .height($r('app.float.input_height'))
               Button() {
-                SymbolGlyph($r('sys.symbol.magnifyingglass')).fontSize($r('app.float.icon_size'))
-              }.onClick(() => this.submit())
+                AppIcon({ source: $r('app.media.icon_magnifier'), iconSize: $r('app.float.icon_size') })
+              }
+              .accessibilityText($r('app.string.search_title'))
+              .onClick(() => this.submit())
             }.width('100%')
             if (searchViewModel.state === LoadState.IDLE) {
               Text($r('app.string.search_intro')).fontColor($r('app.color.hm_text_secondary')).width('100%')

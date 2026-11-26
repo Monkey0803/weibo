@@ -5,14 +5,17 @@
  */
 
 import { antiPeep } from '../service/AntiPeep';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct PrivacyVeil {
   build() {
     Column({ space: $r('app.float.space_l') }) {
-      SymbolGlyph($r('sys.symbol.eye_slash'))
-        .fontSize($r('app.float.hero_icon_size'))
-        .fontColor([$r('app.color.hm_text_primary')])
+      AppIcon({
+        source: $r('app.media.icon_eye_closed'),
+        iconSize: $r('app.float.hero_icon_size'),
+        tint: $r('app.color.hm_text_primary')
+      })
       Text($r('app.string.veil_message'))
         .fontSize($r('app.float.font_size_body'))
         .fontColor($r('app.color.hm_text_primary'))

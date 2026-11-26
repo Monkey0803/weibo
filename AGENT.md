@@ -91,9 +91,13 @@ entry/src/main/ets/
   不要在滚动视口外加底部占位。
 - **改标题栏/内容关系**：`CONTENT_UNDER_TITLE_BAR`（`common/constants/CommonConstants.ets`）一个开关切换「穿透动态模糊」与「内容避让」；标题栏/状态栏的滑动显隐由 `TITLE_BAR_DYNAMIC_HIDE`（+ `TITLE_BAR_HIDE_OFFSET_VP` / `TITLE_BAR_HIDE_RATIO`）控制，`Index.dynamicHideParams()` 统一组装。
 
-## 图标：一律用 HM Symbol（不要引图片）
+## 图标：应用图标集 + HM Symbol
 
-- 独立图标 `SymbolGlyph($r('sys.symbol.*'))`；文本内混排用 `SymbolSpan`，但它**必须放在 `Text` 里**
+- 应用内品牌与业务图标统一使用 `design/icons/source/` 的 SVG 源文件；由 `icons.yaml` 和 draw-icons 构建，再同步到 `entry/src/main/resources/base/media/icon_*.svg`。
+- ArkUI 页面通过 `views/AppIcon.ets` 显示 SVG，并用 `fillColor` 继承页面状态色；不要直接编辑 `design/icons/` 顶层构建产物。
+- HDS 宽屏侧栏、系统 Menu 和 SnackBar 等只接受 Symbol 的平台接口继续使用 HM Symbol。
+
+- 平台接口中的独立图标 `SymbolGlyph($r('sys.symbol.*'))`；文本内混排用 `SymbolSpan`，但它**必须放在 `Text` 里**
   （放别处不显示），且不支持通用属性和事件。
 - 两个组件都是**内置组件，禁止 import**；只有 `SymbolGlyphModifier` 从 `@kit.ArkUI` 导入。
 - 值只能是 `sys.symbol.*`；不要用 `$r('app.media.*')` / `$rawfile()` / 字符串。图标名必须在官方字典里

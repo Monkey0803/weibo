@@ -18,6 +18,7 @@ import { gripSensor } from '../service/GripSensor';
 import { ResponsiveContent } from './ResponsiveContent';
 import { scrollers } from '../service/ScrollerRegistry';
 import { safeArea } from '../service/SafeAreaController';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct SettingsTabView {
@@ -59,37 +60,21 @@ export struct SettingsTabView {
   @Builder
   Leading(icon: Resource, title: ResourceStr) {
     Row({ space: $r('app.float.space_m') }) {
-      SymbolGlyph(icon)
-        .fontSize($r('app.float.icon_size'))
-        .fontColor([$r('app.color.hm_brand')])
+      AppIcon({ source: icon, iconSize: $r('app.float.icon_size'), tint: $r('app.color.hm_brand') })
       Text(title)
         .fontSize($r('app.float.font_size_body'))
         .fontColor($r('app.color.hm_text_primary'))
     }
   }
 
-  /**
-   * 行首图标的动态样式：开 = 品牌色，关 = 次要色。
-   *
-   * 用 SymbolGlyphModifier（@kit.ArkUI，API 12+）+ 通用属性 attributeModifier 挂载 —— 图标属性
-   * 随状态变，而不是写死一条 fontColor。
-   *
-   * 注意：本 SDK 的 `new SymbolGlyphModifier(...)` 只接受可选的 src(Resource)，不支持文档示例里的
-   * `new SymbolGlyphModifier({ fontSize, fontColor })` 写法；而链式调用返回的是 SymbolGlyphAttribute，
-   * 不能直接赋给 SymbolGlyphModifier —— 所以这里先建实例、再赋值式设置属性。
-   */
-  private static iconModifier(on: boolean): SymbolGlyphModifier {
-    const modifier: SymbolGlyphModifier = new SymbolGlyphModifier();
-    modifier.fontColor([on ? $r('app.color.hm_brand') : $r('app.color.hm_text_secondary')]);
-    return modifier;
-  }
-
   @Builder
   SwitchLeading(icon: Resource, title: ResourceStr, isOn: boolean) {
     Row({ space: $r('app.float.space_m') }) {
-      SymbolGlyph(icon)
-        .fontSize($r('app.float.icon_size'))
-        .attributeModifier(SettingsTabView.iconModifier(isOn))
+      AppIcon({
+        source: icon,
+        iconSize: $r('app.float.icon_size'),
+        tint: isOn ? $r('app.color.hm_brand') : $r('app.color.hm_text_secondary')
+      })
       Text(title)
         .fontSize($r('app.float.font_size_body'))
         .fontColor($r('app.color.hm_text_primary'))
@@ -104,9 +89,11 @@ export struct SettingsTabView {
       Text(choice.labelOf(currentId))
         .fontSize($r('app.float.font_size_body'))
         .fontColor($r('app.color.hm_text_secondary'))
-      SymbolGlyph($r('sys.symbol.chevron_down'))
-        .fontSize($r('app.float.icon_size_small'))
-        .fontColor([$r('app.color.hm_text_secondary')])
+      AppIcon({
+        source: $r('app.media.icon_chevron_down'),
+        iconSize: $r('app.float.icon_size_small'),
+        tint: $r('app.color.hm_text_secondary')
+      })
     }
     .width('100%')
     .height($r('app.float.row_height'))
@@ -135,27 +122,27 @@ export struct SettingsTabView {
   @Builder
   MaterialCard() {
     Column() {
-      this.OptionRow($r('sys.symbol.paintpalette'), $r('app.string.row_theme'), THEME_OPTIONS, appSettings.themeMode,
+      this.OptionRow($r('app.media.icon_moon'), $r('app.string.row_theme'), THEME_OPTIONS, appSettings.themeMode,
         (id: string) => {
           settingsViewModel.setTheme(this.hostContext(), id);
         })
       Divider().color($r('app.color.hm_divider'))
-      this.SwitchRow($r('sys.symbol.rays'), $r('app.string.row_immersive'), appSettings.immersiveOn,
+      this.SwitchRow($r('app.media.icon_sun'), $r('app.string.row_immersive'), appSettings.immersiveOn,
         (value: boolean) => {
           settingsViewModel.setImmersiveOn(value);
         })
       Divider().color($r('app.color.hm_divider'))
-      this.OptionRow($r('sys.symbol.circle'), $r('app.string.row_material_type'), MATERIAL_TYPE_OPTIONS, appSettings.materialType,
+      this.OptionRow($r('app.media.icon_rings'), $r('app.string.row_material_type'), MATERIAL_TYPE_OPTIONS, appSettings.materialType,
         (id: string) => {
           settingsViewModel.setMaterialType(id);
         })
       Divider().color($r('app.color.hm_divider'))
-      this.OptionRow($r('sys.symbol.slider_horizontal_2'), $r('app.string.row_material_level'), MATERIAL_LEVEL_OPTIONS, appSettings.materialLevel,
+      this.OptionRow($r('app.media.icon_sliders'), $r('app.string.row_material_level'), MATERIAL_LEVEL_OPTIONS, appSettings.materialLevel,
         (id: string) => {
           settingsViewModel.setMaterialLevel(id);
         })
       Divider().color($r('app.color.hm_divider'))
-      this.SwitchRow($r('sys.symbol.bolt'), $r('app.string.row_light_effect'), appSettings.lightEffectEnabled,
+      this.SwitchRow($r('app.media.icon_bolt'), $r('app.string.row_light_effect'), appSettings.lightEffectEnabled,
         (value: boolean) => {
           settingsViewModel.setLightEffectEnabled(value);
         })
@@ -196,7 +183,7 @@ export struct SettingsTabView {
 
           this.SectionTitle($r('app.string.section_language'))
           Column() {
-            this.OptionRow($r('sys.symbol.translate'), $r('app.string.row_language'), LANGUAGE_OPTIONS, appSettings.languageMode,
+            this.OptionRow($r('app.media.icon_globe'), $r('app.string.row_language'), LANGUAGE_OPTIONS, appSettings.languageMode,
               (id: string) => {
                 settingsViewModel.setLanguage(id);
               })
@@ -207,12 +194,12 @@ export struct SettingsTabView {
 
           this.SectionTitle($r('app.string.section_system'))
           Column() {
-            this.SwitchRow($r('sys.symbol.hand_raised_hexagon'), $r('app.string.row_grip'), appSettings.gripEnabled,
+            this.SwitchRow($r('app.media.icon_grip'), $r('app.string.row_grip'), appSettings.gripEnabled,
               (value: boolean) => {
                 settingsViewModel.setGripEnabled(value);
               })
             Divider().color($r('app.color.hm_divider'))
-            this.SwitchRow($r('sys.symbol.eye_slash'), $r('app.string.row_antipeep'), appSettings.antiPeepEnabled,
+            this.SwitchRow($r('app.media.icon_eye_closed'), $r('app.string.row_antipeep'), appSettings.antiPeepEnabled,
               (value: boolean) => {
                 settingsViewModel.setAntiPeepEnabled(value, this.hostContext());
               })

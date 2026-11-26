@@ -1,6 +1,6 @@
-# HarmonyOS 微博客户端
+# 微澜
 
-一个使用 ArkTS、ArkUI 和 HarmonyOS Design System 构建的第三方微博客户端实验项目。
+一个使用 ArkTS、ArkUI 和 HarmonyOS Design System 构建的第三方微博客户端实验项目。“微澜”为独立应用名称，不代表微博官方产品。
 
 ## 当前能力
 

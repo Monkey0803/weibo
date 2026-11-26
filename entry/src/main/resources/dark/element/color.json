@@ -6,7 +6,7 @@
     },
     {
       "name": "hm_brand",
-      "value": "#FF3F7CFF"
+      "value": "#FF5ED8D0"
     },
     {
       "name": "hm_text_primary",
@@ -36,7 +36,7 @@
       "name": "hm_effect_surface",
       "value": "#FF121318"
     },
-    { "name": "hm_brand_soft", "value": "#293F7CFF" },
+    { "name": "hm_brand_soft", "value": "#295ED8D0" },
     { "name": "hm_scrim", "value": "#99000000" },
     { "name": "hm_error", "value": "#FFFF6B5F" },
     { "name": "hm_video_background", "value": "#FF000000" }

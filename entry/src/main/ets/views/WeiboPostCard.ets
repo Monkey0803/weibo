@@ -1,5 +1,6 @@
 import { PostRouteParam, UserRouteParam, VideoRouteParam, WeiboPost } from '../model/WeiboModels';
 import { RouterConstants } from '../common/constants/RouterConstants';
+import { AppIcon } from './AppIcon';
 
 @ComponentV2
 export struct WeiboPostCard {
@@ -56,12 +57,15 @@ export struct WeiboPostCard {
           .objectFit(ImageFit.Cover)
           .borderRadius($r('app.float.radius_small'))
         Button() {
-          SymbolGlyph($r('sys.symbol.play_round_rectangle_fill'))
-            .fontSize($r('app.float.hero_icon_size'))
-            .fontColor([$r('sys.color.white')])
+          AppIcon({
+            source: $r('app.media.icon_play'),
+            iconSize: $r('app.float.hero_icon_size'),
+            tint: $r('sys.color.white')
+          })
         }
         .buttonStyle(ButtonStyleMode.TEXTUAL)
         .backgroundColor($r('app.color.hm_scrim'))
+        .accessibilityText($r('app.string.action_play_video'))
       }
       .width('100%')
       .onClick(() => this.openVideo())
