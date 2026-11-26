@@ -1,0 +1,288 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "HDS 应用入口模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "HDS 应用"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "微博"
+    },
+    {
+      "name": "tab_home",
+      "value": "首页"
+    },
+    {
+      "name": "tab_settings",
+      "value": "设置"
+    },
+    {
+      "name": "tab_images",
+      "value": "图片"
+    },
+    {
+      "name": "home_title",
+      "value": "首页"
+    },
+    {
+      "name": "settings_title",
+      "value": "设置"
+    },
+    {
+      "name": "section_appearance",
+      "value": "外观"
+    },
+    {
+      "name": "section_language",
+      "value": "语言"
+    },
+    {
+      "name": "section_system",
+      "value": "系统特性"
+    },
+    {
+      "name": "row_theme",
+      "value": "主题"
+    },
+    {
+      "name": "row_language",
+      "value": "语言"
+    },
+    {
+      "name": "row_immersive",
+      "value": "沉浸光感"
+    },
+    {
+      "name": "row_material_type",
+      "value": "材质类型"
+    },
+    {
+      "name": "row_material_level",
+      "value": "沉浸光感材质"
+    },
+    {
+      "name": "row_grip",
+      "value": "智感握姿"
+    },
+    {
+      "name": "row_antipeep",
+      "value": "防窥保护"
+    },
+    {
+      "name": "opt_follow_system",
+      "value": "跟随系统"
+    },
+    {
+      "name": "opt_light",
+      "value": "浅色"
+    },
+    {
+      "name": "opt_dark",
+      "value": "深色"
+    },
+    {
+      "name": "opt_chinese",
+      "value": "简体中文"
+    },
+    {
+      "name": "opt_english",
+      "value": "English"
+    },
+    {
+      "name": "opt_material_adaptive",
+      "value": "自适应"
+    },
+    {
+      "name": "opt_material_immersive",
+      "value": "沉浸式"
+    },
+    {
+      "name": "opt_material_none",
+      "value": "无材质效果"
+    },
+    {
+      "name": "opt_level_exquisite",
+      "value": "精美"
+    },
+    {
+      "name": "opt_level_gentle",
+      "value": "轻柔"
+    },
+    {
+      "name": "opt_level_smooth",
+      "value": "流畅"
+    },
+    {
+      "name": "opt_level_adaptive",
+      "value": "自适应"
+    },
+    {
+      "name": "aux_material_unsupported",
+      "value": "本机不支持沉浸式材质"
+    },
+    {
+      "name": "aux_grip_unsupported",
+      "value": "未生效：设备不支持智感握姿"
+    },
+    {
+      "name": "aux_antipeep_unsupported",
+      "value": "未生效：设备不支持防窥保护"
+    },
+    {
+      "name": "veil_message",
+      "value": "已为你隐藏屏幕内容"
+    },
+    {
+      "name": "veil_dismiss",
+      "value": "轻点任意位置继续"
+    },
+    {
+      "name": "home_placeholder",
+      "value": "HDS Navigation + HdsTabs 模板"
+    },
+    {
+      "name": "home_sample_row",
+      "value": "示例文章 %d"
+    },
+    {
+      "name": "home_open_detail",
+      "value": "打开详情"
+    },
+    {
+      "name": "image_hdr",
+      "value": "HDR"
+    },
+    {
+      "name": "image_animated",
+      "value": "检测到动图格式（GIF / WebP）"
+    },
+    {
+      "name": "image_static",
+      "value": "静态图片"
+    },
+    {
+      "name": "image_hint",
+      "value": "GIF / WebP 动图由系统 Image 组件自动播放。"
+    },
+    {
+      "name": "image_preview_title",
+      "value": "图片预览"
+    },
+    {
+      "name": "image_open_preview",
+      "value": "点按图片查看大图"
+    },
+    {
+      "name": "row_light_effect",
+      "value": "光感反馈"
+    },
+    {
+      "name": "detail_title",
+      "value": "详情"
+    },
+    {
+      "name": "detail_hint",
+      "value": "HDS 列表项 / 操作栏 / 即时通知"
+    },
+    {
+      "name": "detail_snack_message",
+      "value": "操作已完成"
+    },
+    {
+      "name": "detail_snack_action",
+      "value": "撤销"
+    },
+    {
+      "name": "mini_bar_now_playing",
+      "value": "正在播放"
+    },
+    {
+      "name": "section_list",
+      "value": "分区"
+    },
+    {
+      "name": "section_effects",
+      "value": "视效"
+    },
+    {
+      "name": "reason_detect_gesture",
+      "value": "用于识别握持手，实现智感握姿"
+    },
+    {
+      "name": "reason_dlp_hide",
+      "value": "用于在他人窥视时隐藏屏幕内容"
+    },
+    {
+      "name": "aux_material_state_enable",
+      "value": "应用级材质：enable（所有系统组件默认开启）"
+    },
+    {
+      "name": "aux_material_state_default",
+      "value": "应用级材质：default（仅弹窗与文本菜单默认开启）"
+    },
+    {
+      "name": "aux_material_state_disable",
+      "value": "应用级材质：disable（全部关闭）"
+    },
+    {
+      "name": "aux_material_level_high",
+      "value": "材质等级：EXQUISITE（高算力）"
+    },
+    {
+      "name": "aux_material_level_mid",
+      "value": "材质等级：GENTLE（中算力）"
+    },
+    {
+      "name": "aux_material_level_low",
+      "value": "材质等级：SMOOTH（低算力）"
+    },
+    { "name": "tab_search", "value": "搜索" },
+    { "name": "tab_profile", "value": "我的" },
+    { "name": "search_title", "value": "搜索微博" },
+    { "name": "profile_title", "value": "个人主页" },
+    { "name": "login_title", "value": "登录微博" },
+    { "name": "video_title", "value": "视频" },
+    { "name": "feed_following", "value": "关注" },
+    { "name": "feed_hot", "value": "热门" },
+    { "name": "action_refresh", "value": "刷新" },
+    { "name": "action_retry", "value": "重试" },
+    { "name": "action_login", "value": "登录" },
+    { "name": "action_logout_hint", "value": "账号登录状态由微博网页管理。" },
+    { "name": "action_send", "value": "发送" },
+    { "name": "action_like", "value": "点赞" },
+    { "name": "action_unlike", "value": "已赞" },
+    { "name": "action_play_video", "value": "播放视频" },
+    { "name": "loading", "value": "加载中…" },
+    { "name": "loading_more", "value": "正在加载更多…" },
+    { "name": "empty_feed", "value": "暂时没有微博" },
+    { "name": "empty_search", "value": "没有找到相关微博" },
+    { "name": "empty_comments", "value": "还没有评论" },
+    { "name": "search_hint", "value": "搜索微博内容" },
+    { "name": "search_intro", "value": "输入关键词，搜索公开微博内容。" },
+    { "name": "login_intro", "value": "请在微博官方页面完成登录。本应用不会读取或保存你的密码和验证码。" },
+    { "name": "login_finished", "value": "我已完成登录" },
+    { "name": "login_not_detected", "value": "未检测到有效微博登录状态，请先在网页中完成登录。" },
+    { "name": "profile_login_intro", "value": "登录后可查看关注流、个人主页，并进行点赞和评论。" },
+    { "name": "comments_title", "value": "评论" },
+    { "name": "comment_hint", "value": "写评论" },
+    { "name": "comment_sent", "value": "评论已发送" },
+    { "name": "mutation_failed", "value": "操作未完成，微博接口可能已经变化。" },
+    { "name": "error_network", "value": "网络请求失败，请检查连接后重试。" },
+    { "name": "error_http", "value": "微博返回 HTTP " },
+    { "name": "error_login_required", "value": "请先登录后再使用此功能。" },
+    { "name": "error_login_expired", "value": "微博登录状态已失效，请重新登录。" },
+    { "name": "error_api_unavailable", "value": "内容暂时不可用，微博网页接口可能已经变化。" },
+    { "name": "video_error", "value": "当前视频无法播放。" },
+    { "name": "post_reposts", "value": "%d 转发" },
+    { "name": "post_comments", "value": "%d 评论" },
+    { "name": "post_likes", "value": "%d 赞" },
+    { "name": "profile_following", "value": "%d 关注" },
+    { "name": "profile_followers", "value": "%d 粉丝" },
+    { "name": "profile_posts", "value": "%d 微博" },
+    { "name": "web_login_notice", "value": "微博官方登录页面" }
+  ]
+}

@@ -1,0 +1,27 @@
+# DevEco Studio
+.idea/
+.hvigor/
+local.properties
+
+# Dependencies and build outputs
+oh_modules/
+**/oh_modules/
+build/
+**/build/
+.preview/
+**/.preview/
+
+# HarmonyOS signing materials
+*.p12
+*.p7b
+*.cer
+*.pem
+*.key
+*.jks
+*.keystore
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
