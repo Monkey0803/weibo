@@ -102,7 +102,10 @@ export struct DetailPageView {
     ResponsiveContent() {
       List() {
         ListItem() { Row().height(safeArea.contentTopInsetVp) }
-        ListItem() { WeiboPostCard({ post: this.viewModel.post, navPathStack: this.navPathStack }) }
+        ListItem() {
+          WeiboPostCard({ post: this.viewModel.post, navPathStack: this.navPathStack, expanded: true })
+        }
+        .margin({ bottom: $r('app.float.space_m') })
         ListItem() { this.actionRow() }
         ListItem() {
           Text($r('app.string.comments_title'))

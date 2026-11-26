@@ -8,7 +8,14 @@ import { preferences } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { appSettings } from '../model/AppSettings';
-import { THEME_OPTIONS, LANGUAGE_OPTIONS, MATERIAL_TYPE_OPTIONS, MATERIAL_LEVEL_OPTIONS } from '../model/SettingsOptions';
+import {
+  THEME_OPTIONS,
+  LANGUAGE_OPTIONS,
+  MATERIAL_TYPE_OPTIONS,
+  MATERIAL_LEVEL_OPTIONS,
+  CARD_GLOW_INTENSITY_OPTIONS,
+  CARD_GLOW_PALETTE_OPTIONS
+} from '../model/SettingsOptions';
 import { PreferencesConstants } from '../common/constants/PreferencesConstants';
 
 export class SettingsStore {
@@ -31,6 +38,14 @@ export class SettingsStore {
       appSettings.lightEffectEnabled = store.getSync(PreferencesConstants.KEY_LIGHT_EFFECT, appSettings.lightEffectEnabled) as boolean;
       appSettings.gripEnabled = store.getSync(PreferencesConstants.KEY_GRIP_ENABLED, appSettings.gripEnabled) as boolean;
       appSettings.antiPeepEnabled = store.getSync(PreferencesConstants.KEY_ANTI_PEEP_ENABLED, appSettings.antiPeepEnabled) as boolean;
+      appSettings.cardGlowEnabled = store.getSync(PreferencesConstants.KEY_CARD_GLOW_ENABLED,
+        appSettings.cardGlowEnabled) as boolean;
+      const cardGlowIntensity: string = store.getSync(PreferencesConstants.KEY_CARD_GLOW_INTENSITY,
+        appSettings.cardGlowIntensity) as string;
+      const cardGlowPalette: string = store.getSync(PreferencesConstants.KEY_CARD_GLOW_PALETTE,
+        appSettings.cardGlowPalette) as string;
+      appSettings.cardGlowIntensity = CARD_GLOW_INTENSITY_OPTIONS.normalize(cardGlowIntensity);
+      appSettings.cardGlowPalette = CARD_GLOW_PALETTE_OPTIONS.normalize(cardGlowPalette);
     } catch (err) {
       const error: BusinessError = err as BusinessError;
       console.error('SettingsStore.load failed: ' + error.code.toString());
@@ -52,6 +67,9 @@ export class SettingsStore {
       store.putSync(PreferencesConstants.KEY_LIGHT_EFFECT, appSettings.lightEffectEnabled);
       store.putSync(PreferencesConstants.KEY_GRIP_ENABLED, appSettings.gripEnabled);
       store.putSync(PreferencesConstants.KEY_ANTI_PEEP_ENABLED, appSettings.antiPeepEnabled);
+      store.putSync(PreferencesConstants.KEY_CARD_GLOW_ENABLED, appSettings.cardGlowEnabled);
+      store.putSync(PreferencesConstants.KEY_CARD_GLOW_INTENSITY, appSettings.cardGlowIntensity);
+      store.putSync(PreferencesConstants.KEY_CARD_GLOW_PALETTE, appSettings.cardGlowPalette);
       store.flush().catch((err: BusinessError) => {
         console.error('SettingsStore.flush failed: ' + err.code.toString());
       });

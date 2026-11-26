@@ -12,7 +12,7 @@ import {
   HdsSideMenuMainItem
 } from '@kit.UIDesignKit';
 import { appSettings } from '../model/AppSettings';
-import { PostRouteParam, UserRouteParam, VideoRouteParam } from '../model/WeiboModels';
+import { ImagePreviewRouteParam, PostRouteParam, UserRouteParam, VideoRouteParam } from '../model/WeiboModels';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
 import { backgroundViewModel } from '../viewmodel/BackgroundViewModel';
 import { authViewModel } from '../viewmodel/AuthViewModel';
@@ -33,6 +33,7 @@ import { DetailPageView } from '../views/DetailPageView';
 import { LoginPageView } from '../views/LoginPageView';
 import { ProfilePageView } from '../views/ProfilePageView';
 import { VideoPageView } from '../views/VideoPageView';
+import { ImagePreviewView } from '../views/ImagePreviewView';
 import { PrivacyVeil } from '../views/PrivacyVeil';
 import { AppIcon } from '../views/AppIcon';
 
@@ -235,6 +236,12 @@ struct Index {
       }
       .titleBar(indexTitleOptions($r('app.string.video_title')))
       .backgroundColor($r('app.color.hm_page_transparent'))
+    } else if (name === RouterConstants.PAGE_IMAGE_PREVIEW && pageInfos instanceof ImagePreviewRouteParam) {
+      HdsNavDestination() {
+        ImagePreviewView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+      }
+      .hideTitleBar(true)
+      .backgroundColor($r('app.color.hm_video_background'))
     }
   }
 

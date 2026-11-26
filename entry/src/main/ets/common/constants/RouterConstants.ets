@@ -9,4 +9,5 @@ export class RouterConstants {
   static readonly PAGE_LOGIN: string = 'login';
   static readonly PAGE_PROFILE: string = 'profile';
   static readonly PAGE_VIDEO: string = 'video';
+  static readonly PAGE_IMAGE_PREVIEW: string = 'imagePreview';
 }

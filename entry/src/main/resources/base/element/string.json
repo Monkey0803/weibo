@@ -73,6 +73,18 @@
       "value": "Anti-peep"
     },
     {
+      "name": "row_card_glow",
+      "value": "Post card glow"
+    },
+    {
+      "name": "row_card_glow_intensity",
+      "value": "Card glow intensity"
+    },
+    {
+      "name": "row_card_glow_palette",
+      "value": "Card glow palette"
+    },
+    {
       "name": "opt_follow_system",
       "value": "Follow system"
     },
@@ -120,6 +132,12 @@
       "name": "opt_level_adaptive",
       "value": "Adaptive"
     },
+    { "name": "opt_card_glow_soft", "value": "Soft" },
+    { "name": "opt_card_glow_standard", "value": "Standard" },
+    { "name": "opt_card_glow_vivid", "value": "Vivid" },
+    { "name": "opt_card_glow_theme", "value": "Follow theme" },
+    { "name": "opt_card_glow_cool", "value": "Cool" },
+    { "name": "opt_card_glow_warm", "value": "Warm" },
     {
       "name": "aux_material_unsupported",
       "value": "Not supported on this device"
@@ -283,6 +301,13 @@
     { "name": "profile_following", "value": "%d following" },
     { "name": "profile_followers", "value": "%d followers" },
     { "name": "profile_posts", "value": "%d posts" },
-    { "name": "web_login_notice", "value": "Official Weibo sign-in page" }
+    { "name": "web_login_notice", "value": "Official Weibo sign-in page" },
+    { "name": "post_read_more", "value": "View full post" },
+    { "name": "post_repost_author", "value": "@%s" },
+    { "name": "post_image_more", "value": "+%d" },
+    { "name": "media_load_failed", "value": "Image unavailable" },
+    { "name": "image_retry", "value": "Try again" },
+    { "name": "image_preview_position", "value": "%d / %d" },
+    { "name": "image_preview_back", "value": "Back" }
   ]
 }

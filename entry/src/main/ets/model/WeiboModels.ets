@@ -129,6 +129,20 @@ export class VideoRouteParam {
   }
 }
 
+export class ImagePreviewRouteParam {
+  readonly imageUrls: string[];
+  readonly initialIndex: number;
+
+  constructor(imageUrls: string[], initialIndex: number) {
+    this.imageUrls = imageUrls;
+    if (initialIndex < 0 || initialIndex >= imageUrls.length) {
+      this.initialIndex = 0;
+    } else {
+      this.initialIndex = initialIndex;
+    }
+  }
+}
+
 export class SessionInfo {
   readonly loggedIn: boolean;
   readonly userId: string;

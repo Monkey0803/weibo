@@ -102,6 +102,21 @@ export class SettingsViewModel {
     settingsStore.save();
   }
 
+  setCardGlowEnabled(value: boolean): void {
+    appSettings.cardGlowEnabled = value;
+    settingsStore.save();
+  }
+
+  setCardGlowIntensity(id: string): void {
+    appSettings.cardGlowIntensity = id;
+    settingsStore.save();
+  }
+
+  setCardGlowPalette(id: string): void {
+    appSettings.cardGlowPalette = id;
+    settingsStore.save();
+  }
+
   setGripEnabled(value: boolean): void {
     appSettings.gripEnabled = value;
     // 开关即订阅开关：开启时订阅 holdingHandChanged，关闭时 off。

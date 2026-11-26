@@ -84,6 +84,7 @@ export struct HomeTabView {
         }
         ForEach(feedViewModel.posts, (post: WeiboPost) => {
           ListItem() { WeiboPostCard({ post: post, navPathStack: this.navPathStack }) }
+            .margin({ bottom: $r('app.float.space_m') })
         }, (post: WeiboPost) => post.id)
         if (feedViewModel.state === LoadState.READY && feedViewModel.hasMore) {
           ListItem() {

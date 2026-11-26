@@ -33,3 +33,17 @@ export enum MaterialGrade {
   SMOOTH = 'smooth',
   ADAPTIVE = 'adaptive'
 }
+
+/** 微博卡片径向光晕强度。 */
+export enum CardGlowIntensity {
+  SOFT = 'soft',
+  STANDARD = 'standard',
+  VIVID = 'vivid'
+}
+
+/** 微博卡片径向光晕配色。 */
+export enum CardGlowPalette {
+  THEME = 'theme',
+  COOL = 'cool',
+  WARM = 'warm'
+}

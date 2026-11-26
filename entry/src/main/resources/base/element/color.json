@@ -39,6 +39,11 @@
     { "name": "hm_brand_soft", "value": "#1A007A83" },
     { "name": "hm_scrim", "value": "#66000000" },
     { "name": "hm_error", "value": "#FFC42B1C" },
-    { "name": "hm_video_background", "value": "#FF000000" }
+    { "name": "hm_video_background", "value": "#FF000000" },
+    { "name": "hm_card_glow_theme", "value": "#3D6EA8FF" },
+    { "name": "hm_card_glow_cool", "value": "#3D52D6FF" },
+    { "name": "hm_card_glow_warm", "value": "#3DFF9B6A" },
+    { "name": "hm_media_placeholder", "value": "#14000000" },
+    { "name": "hm_preview_control", "value": "#99000000" }
   ]
 }

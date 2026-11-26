@@ -94,6 +94,18 @@
     { "name": "font_size_metric", "value": "12" },
     { "name": "radius_small", "value": "10" },
     { "name": "stroke_width", "value": "1" },
-    { "name": "progress_size", "value": "32" }
+    { "name": "progress_size", "value": "32" },
+    { "name": "media_single_height", "value": "240" },
+    { "name": "media_double_height", "value": "176" },
+    { "name": "media_grid_row_height", "value": "112" },
+    { "name": "media_grid_two_rows_height", "value": "228" },
+    { "name": "media_grid_three_rows_height", "value": "344" },
+    { "name": "media_grid_gap", "value": "4" },
+    { "name": "card_glow_radius_soft", "value": "176" },
+    { "name": "card_glow_radius_standard", "value": "220" },
+    { "name": "card_glow_radius_vivid", "value": "268" },
+    { "name": "card_glow_center_x", "value": "48" },
+    { "name": "card_glow_center_y", "value": "32" },
+    { "name": "preview_control_size", "value": "44" }
   ]
 }

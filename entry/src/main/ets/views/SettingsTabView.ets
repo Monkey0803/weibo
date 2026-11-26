@@ -10,7 +10,16 @@
 import { common } from '@kit.AbilityKit';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
 import { appSettings } from '../model/AppSettings';
-import { ChoiceOption, ChoiceSet, THEME_OPTIONS, LANGUAGE_OPTIONS, MATERIAL_TYPE_OPTIONS, MATERIAL_LEVEL_OPTIONS } from '../model/SettingsOptions';
+import {
+  ChoiceOption,
+  ChoiceSet,
+  THEME_OPTIONS,
+  LANGUAGE_OPTIONS,
+  MATERIAL_TYPE_OPTIONS,
+  MATERIAL_LEVEL_OPTIONS,
+  CARD_GLOW_INTENSITY_OPTIONS,
+  CARD_GLOW_PALETTE_OPTIONS
+} from '../model/SettingsOptions';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
 import { MaterialController } from '../service/MaterialController';
 import { antiPeep } from '../service/AntiPeep';
@@ -146,6 +155,23 @@ export struct SettingsTabView {
         (value: boolean) => {
           settingsViewModel.setLightEffectEnabled(value);
         })
+      Divider().color($r('app.color.hm_divider'))
+      this.SwitchRow($r('app.media.icon_sun'), $r('app.string.row_card_glow'), appSettings.cardGlowEnabled,
+        (value: boolean) => {
+          settingsViewModel.setCardGlowEnabled(value);
+        })
+      if (appSettings.cardGlowEnabled) {
+        Divider().color($r('app.color.hm_divider'))
+        this.OptionRow($r('app.media.icon_sliders'), $r('app.string.row_card_glow_intensity'),
+          CARD_GLOW_INTENSITY_OPTIONS, appSettings.cardGlowIntensity, (id: string) => {
+            settingsViewModel.setCardGlowIntensity(id);
+          })
+        Divider().color($r('app.color.hm_divider'))
+        this.OptionRow($r('app.media.icon_rings'), $r('app.string.row_card_glow_palette'),
+          CARD_GLOW_PALETTE_OPTIONS, appSettings.cardGlowPalette, (id: string) => {
+            settingsViewModel.setCardGlowPalette(id);
+          })
+      }
     }
     .width('100%')
     .backgroundColor($r('app.color.hm_card_background'))

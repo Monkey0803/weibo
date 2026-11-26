@@ -5,7 +5,14 @@
  * 状态文件可读，SDK 枚举重排也不会错位；读到旧值 / 脏值统一退回默认项。控件（下拉菜单）只认 label。
  */
 
-import { ThemeMode, AppLanguage, MaterialKind, MaterialGrade } from '../common/constants/SettingsConstants';
+import {
+  ThemeMode,
+  AppLanguage,
+  MaterialKind,
+  MaterialGrade,
+  CardGlowIntensity,
+  CardGlowPalette
+} from '../common/constants/SettingsConstants';
 
 /** 一个可选项：语义 id + 展示文案。 */
 export class ChoiceOption {
@@ -88,3 +95,17 @@ export const MATERIAL_LEVEL_OPTIONS: ChoiceSet = new ChoiceSet([
   new ChoiceOption(MaterialGrade.SMOOTH, $r('app.string.opt_level_smooth')),
   new ChoiceOption(MaterialGrade.ADAPTIVE, $r('app.string.opt_level_adaptive'))
 ], MaterialGrade.ADAPTIVE);
+
+/** 卡片光感强度：柔和 / 标准 / 鲜明。 */
+export const CARD_GLOW_INTENSITY_OPTIONS: ChoiceSet = new ChoiceSet([
+  new ChoiceOption(CardGlowIntensity.SOFT, $r('app.string.opt_card_glow_soft')),
+  new ChoiceOption(CardGlowIntensity.STANDARD, $r('app.string.opt_card_glow_standard')),
+  new ChoiceOption(CardGlowIntensity.VIVID, $r('app.string.opt_card_glow_vivid'))
+], CardGlowIntensity.SOFT);
+
+/** 卡片光感配色：跟随主题 / 冷色 / 暖色。 */
+export const CARD_GLOW_PALETTE_OPTIONS: ChoiceSet = new ChoiceSet([
+  new ChoiceOption(CardGlowPalette.THEME, $r('app.string.opt_card_glow_theme')),
+  new ChoiceOption(CardGlowPalette.COOL, $r('app.string.opt_card_glow_cool')),
+  new ChoiceOption(CardGlowPalette.WARM, $r('app.string.opt_card_glow_warm'))
+], CardGlowPalette.THEME);

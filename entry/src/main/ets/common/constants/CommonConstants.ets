@@ -8,6 +8,9 @@ export class CommonConstants {
   /** 应用启动时的默认页签下标。 */
   static readonly DEFAULT_TAB_INDEX: number = 0;
 
+  /** 图片预览双指缩放上限。 */
+  static readonly IMAGE_PREVIEW_MAX_SCALE: number = 4;
+
   /** HDS 紧凑标题栏（MINI）高度（vp）——HDS 规范固定值，用于可滚动内容的首屏顶部占位。 */
   static readonly TITLE_BAR_HEIGHT_VP: number = 56;
 

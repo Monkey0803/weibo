@@ -17,12 +17,56 @@ export class DetailViewModel {
   @Trace errorMessage: string = '';
   private cursor: string = '';
 
+  /** 详情接口可能只返回部分字段；缺失值沿用列表页已经拿到的微博，避免展开页内容退化。 */
+  private mergePost(detail: WeiboPost, initial: WeiboPost): WeiboPost {
+    if (detail.id.length === 0) {
+      detail.id = initial.id;
+    }
+    if (detail.mid.length === 0) {
+      detail.mid = initial.mid;
+    }
+    if (detail.user.id.length === 0) {
+      detail.user.id = initial.user.id;
+    }
+    if (detail.user.name.length === 0) {
+      detail.user.name = initial.user.name;
+    }
+    if (detail.user.avatarUrl.length === 0) {
+      detail.user.avatarUrl = initial.user.avatarUrl;
+    }
+    if (detail.user.description.length === 0) {
+      detail.user.description = initial.user.description;
+    }
+    if (detail.text.length === 0) {
+      detail.text = initial.text;
+    }
+    if (detail.createdAt.length === 0) {
+      detail.createdAt = initial.createdAt;
+    }
+    if (detail.source.length === 0) {
+      detail.source = initial.source;
+    }
+    if (detail.media.imageUrls.length === 0) {
+      detail.media.imageUrls = initial.media.imageUrls;
+    }
+    if (detail.media.videoUrl.length === 0) {
+      detail.media.videoUrl = initial.media.videoUrl;
+    }
+    if (detail.media.videoPosterUrl.length === 0) {
+      detail.media.videoPosterUrl = initial.media.videoPosterUrl;
+    }
+    if (detail.repost === undefined) {
+      detail.repost = initial.repost;
+    }
+    return detail;
+  }
+
   async load(initial: WeiboPost): Promise<void> {
     this.post = initial;
     this.state = LoadState.LOADING;
     const detail: Result<WeiboPost> = await weiboRepository.postDetail(initial.id);
     if (detail.success && detail.data) {
-      this.post = detail.data;
+      this.post = this.mergePost(detail.data, initial);
       this.state = LoadState.READY;
     } else {
       this.state = initial.id.length > 0 ? LoadState.READY : LoadState.ERROR;

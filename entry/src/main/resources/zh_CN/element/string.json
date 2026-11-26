@@ -73,6 +73,18 @@
       "value": "防窥保护"
     },
     {
+      "name": "row_card_glow",
+      "value": "微博卡片光感"
+    },
+    {
+      "name": "row_card_glow_intensity",
+      "value": "卡片光感强度"
+    },
+    {
+      "name": "row_card_glow_palette",
+      "value": "卡片光感配色"
+    },
+    {
       "name": "opt_follow_system",
       "value": "跟随系统"
     },
@@ -120,6 +132,12 @@
       "name": "opt_level_adaptive",
       "value": "自适应"
     },
+    { "name": "opt_card_glow_soft", "value": "柔和" },
+    { "name": "opt_card_glow_standard", "value": "标准" },
+    { "name": "opt_card_glow_vivid", "value": "鲜明" },
+    { "name": "opt_card_glow_theme", "value": "跟随主题" },
+    { "name": "opt_card_glow_cool", "value": "冷色" },
+    { "name": "opt_card_glow_warm", "value": "暖色" },
     {
       "name": "aux_material_unsupported",
       "value": "本机不支持沉浸式材质"
@@ -283,6 +301,13 @@
     { "name": "profile_following", "value": "%d 关注" },
     { "name": "profile_followers", "value": "%d 粉丝" },
     { "name": "profile_posts", "value": "%d 微博" },
-    { "name": "web_login_notice", "value": "微博官方登录页面" }
+    { "name": "web_login_notice", "value": "微博官方登录页面" },
+    { "name": "post_read_more", "value": "查看全文" },
+    { "name": "post_repost_author", "value": "@%s" },
+    { "name": "post_image_more", "value": "+%d" },
+    { "name": "media_load_failed", "value": "图片暂时无法显示" },
+    { "name": "image_retry", "value": "重试" },
+    { "name": "image_preview_position", "value": "%d / %d" },
+    { "name": "image_preview_back", "value": "返回" }
   ]
 }

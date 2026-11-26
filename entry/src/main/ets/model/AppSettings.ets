@@ -5,7 +5,14 @@
  * 单例（appSettings），界面直接 import 读写即可，不需要在组件间层层传参。
  */
 
-import { THEME_OPTIONS, LANGUAGE_OPTIONS, MATERIAL_TYPE_OPTIONS, MATERIAL_LEVEL_OPTIONS } from './SettingsOptions';
+import {
+  THEME_OPTIONS,
+  LANGUAGE_OPTIONS,
+  MATERIAL_TYPE_OPTIONS,
+  MATERIAL_LEVEL_OPTIONS,
+  CARD_GLOW_INTENSITY_OPTIONS,
+  CARD_GLOW_PALETTE_OPTIONS
+} from './SettingsOptions';
 
 @ObservedV2
 export class AppSettings {
@@ -25,6 +32,12 @@ export class AppSettings {
   @Trace gripEnabled: boolean = true;
   /** 防窥保护总开关。 */
   @Trace antiPeepEnabled: boolean = false;
+  /** 微博卡片径向光晕开关，与系统材质开关相互独立。 */
+  @Trace cardGlowEnabled: boolean = true;
+  /** 卡片光晕强度：soft | standard | vivid。 */
+  @Trace cardGlowIntensity: string = CARD_GLOW_INTENSITY_OPTIONS.defaultValue;
+  /** 卡片光晕配色：theme | cool | warm。 */
+  @Trace cardGlowPalette: string = CARD_GLOW_PALETTE_OPTIONS.defaultValue;
 }
 
 /** 全局唯一设置实例。 */

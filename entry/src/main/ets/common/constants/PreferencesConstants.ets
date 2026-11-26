@@ -13,4 +13,7 @@ export class PreferencesConstants {
   static readonly KEY_LIGHT_EFFECT: string = 'lightEffectEnabled';
   static readonly KEY_GRIP_ENABLED: string = 'gripEnabled';
   static readonly KEY_ANTI_PEEP_ENABLED: string = 'antiPeepEnabled';
+  static readonly KEY_CARD_GLOW_ENABLED: string = 'cardGlowEnabled';
+  static readonly KEY_CARD_GLOW_INTENSITY: string = 'cardGlowIntensity';
+  static readonly KEY_CARD_GLOW_PALETTE: string = 'cardGlowPalette';
 }
