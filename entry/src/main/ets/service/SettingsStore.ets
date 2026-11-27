@@ -10,11 +10,13 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { appSettings } from '../model/AppSettings';
 import {
   THEME_OPTIONS,
+  THEME_COLOR_OPTIONS,
   LANGUAGE_OPTIONS,
   MATERIAL_TYPE_OPTIONS,
   MATERIAL_LEVEL_OPTIONS,
   CARD_GLOW_INTENSITY_OPTIONS,
-  CARD_GLOW_PALETTE_OPTIONS
+  CARD_GLOW_PALETTE_OPTIONS,
+  VIDEO_PLAYBACK_RATE_OPTIONS
 } from '../model/SettingsOptions';
 import { PreferencesConstants } from '../common/constants/PreferencesConstants';
 
@@ -27,15 +29,23 @@ export class SettingsStore {
       const store: preferences.Preferences = await preferences.getPreferences(context, PreferencesConstants.STORE_NAME);
       this.store = store;
       const theme: string = store.getSync(PreferencesConstants.KEY_THEME_MODE, appSettings.themeMode) as string;
+      const themeColor: string = store.getSync(PreferencesConstants.KEY_THEME_COLOR, appSettings.themeColor) as string;
       const language: string = store.getSync(PreferencesConstants.KEY_LANGUAGE_MODE, appSettings.languageMode) as string;
       const materialType: string = store.getSync(PreferencesConstants.KEY_MATERIAL_TYPE, appSettings.materialType) as string;
       const materialLevel: string = store.getSync(PreferencesConstants.KEY_MATERIAL_LEVEL, appSettings.materialLevel) as string;
       appSettings.themeMode = THEME_OPTIONS.normalize(theme);
+      appSettings.themeColor = THEME_COLOR_OPTIONS.normalize(themeColor);
+      appSettings.backgroundImagePath = store.getSync(PreferencesConstants.KEY_BACKGROUND_IMAGE_PATH,
+        appSettings.backgroundImagePath) as string;
       appSettings.languageMode = LANGUAGE_OPTIONS.normalize(language);
       appSettings.materialType = MATERIAL_TYPE_OPTIONS.normalize(materialType);
       appSettings.materialLevel = MATERIAL_LEVEL_OPTIONS.normalize(materialLevel);
       appSettings.immersiveOn = store.getSync(PreferencesConstants.KEY_IMMERSIVE_ON, appSettings.immersiveOn) as boolean;
       appSettings.lightEffectEnabled = store.getSync(PreferencesConstants.KEY_LIGHT_EFFECT, appSettings.lightEffectEnabled) as boolean;
+      appSettings.titleBarAutoHide = store.getSync(PreferencesConstants.KEY_TITLE_BAR_AUTO_HIDE,
+        appSettings.titleBarAutoHide) as boolean;
+      appSettings.tabBarAutoHide = store.getSync(PreferencesConstants.KEY_TAB_BAR_AUTO_HIDE,
+        appSettings.tabBarAutoHide) as boolean;
       appSettings.gripEnabled = store.getSync(PreferencesConstants.KEY_GRIP_ENABLED, appSettings.gripEnabled) as boolean;
       appSettings.antiPeepEnabled = store.getSync(PreferencesConstants.KEY_ANTI_PEEP_ENABLED, appSettings.antiPeepEnabled) as boolean;
       appSettings.cardGlowEnabled = store.getSync(PreferencesConstants.KEY_CARD_GLOW_ENABLED,
@@ -46,6 +56,9 @@ export class SettingsStore {
         appSettings.cardGlowPalette) as string;
       appSettings.cardGlowIntensity = CARD_GLOW_INTENSITY_OPTIONS.normalize(cardGlowIntensity);
       appSettings.cardGlowPalette = CARD_GLOW_PALETTE_OPTIONS.normalize(cardGlowPalette);
+      const videoPlaybackRate: string = store.getSync(PreferencesConstants.KEY_VIDEO_PLAYBACK_RATE,
+        appSettings.videoPlaybackRate) as string;
+      appSettings.videoPlaybackRate = VIDEO_PLAYBACK_RATE_OPTIONS.normalize(videoPlaybackRate);
     } catch (err) {
       const error: BusinessError = err as BusinessError;
       console.error('SettingsStore.load failed: ' + error.code.toString());
@@ -60,16 +73,21 @@ export class SettingsStore {
     }
     try {
       store.putSync(PreferencesConstants.KEY_THEME_MODE, appSettings.themeMode);
+      store.putSync(PreferencesConstants.KEY_THEME_COLOR, appSettings.themeColor);
+      store.putSync(PreferencesConstants.KEY_BACKGROUND_IMAGE_PATH, appSettings.backgroundImagePath);
       store.putSync(PreferencesConstants.KEY_LANGUAGE_MODE, appSettings.languageMode);
       store.putSync(PreferencesConstants.KEY_MATERIAL_TYPE, appSettings.materialType);
       store.putSync(PreferencesConstants.KEY_MATERIAL_LEVEL, appSettings.materialLevel);
       store.putSync(PreferencesConstants.KEY_IMMERSIVE_ON, appSettings.immersiveOn);
       store.putSync(PreferencesConstants.KEY_LIGHT_EFFECT, appSettings.lightEffectEnabled);
+      store.putSync(PreferencesConstants.KEY_TITLE_BAR_AUTO_HIDE, appSettings.titleBarAutoHide);
+      store.putSync(PreferencesConstants.KEY_TAB_BAR_AUTO_HIDE, appSettings.tabBarAutoHide);
       store.putSync(PreferencesConstants.KEY_GRIP_ENABLED, appSettings.gripEnabled);
       store.putSync(PreferencesConstants.KEY_ANTI_PEEP_ENABLED, appSettings.antiPeepEnabled);
       store.putSync(PreferencesConstants.KEY_CARD_GLOW_ENABLED, appSettings.cardGlowEnabled);
       store.putSync(PreferencesConstants.KEY_CARD_GLOW_INTENSITY, appSettings.cardGlowIntensity);
       store.putSync(PreferencesConstants.KEY_CARD_GLOW_PALETTE, appSettings.cardGlowPalette);
+      store.putSync(PreferencesConstants.KEY_VIDEO_PLAYBACK_RATE, appSettings.videoPlaybackRate);
       store.flush().catch((err: BusinessError) => {
         console.error('SettingsStore.flush failed: ' + err.code.toString());
       });

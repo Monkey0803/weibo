@@ -1,3 +1,6 @@
+import { AnimatedImageService } from '../service/AnimatedImageService';
+import { AnimatedNetworkImage } from './AnimatedNetworkImage';
+
 @ComponentV2
 export struct WeiboMediaTile {
   @Param imageUrl: string = '';
@@ -5,6 +8,7 @@ export struct WeiboMediaTile {
   @Param remainingCount: number = 0;
   @Event onOpen: (imageIndex: number) => void = (imageIndex: number): void => {};
   @Local loadFailed: boolean = false;
+  @Local imageVisible: boolean = false;
 
   private openImage(): void {
     this.onOpen(this.imageIndex);
@@ -12,6 +16,10 @@ export struct WeiboMediaTile {
 
   private retry(): void {
     this.loadFailed = false;
+  }
+
+  private shouldAnimate(): boolean {
+    return this.imageVisible && AnimatedImageService.isCandidate(this.imageUrl);
   }
 
   build() {
@@ -30,12 +38,23 @@ export struct WeiboMediaTile {
         .justifyContent(FlexAlign.Center)
         .backgroundColor($r('app.color.hm_media_placeholder'))
       } else {
-        Image(this.imageUrl)
-          .width('100%')
-          .height('100%')
-          .objectFit(ImageFit.Cover)
-          .onError((_error: ImageError) => this.loadFailed = true)
-          .onClick(() => this.openImage())
+        if (this.shouldAnimate()) {
+          AnimatedNetworkImage({
+            imageUrl: this.imageUrl,
+            fitMode: ImageFit.Cover,
+            maxSidePx: 360,
+            memoryBudgetBytes: 12 * 1024 * 1024,
+            onTap: () => this.openImage(),
+            onLoadFailed: () => this.loadFailed = true
+          })
+        } else {
+          Image(this.imageUrl)
+            .width('100%')
+            .height('100%')
+            .objectFit(ImageFit.Cover)
+            .onError((_error: ImageError) => this.loadFailed = true)
+            .onClick(() => this.openImage())
+        }
       }
       if (this.remainingCount > 0) {
         Text($r('app.string.post_image_more', this.remainingCount))
@@ -53,6 +72,9 @@ export struct WeiboMediaTile {
     .height('100%')
     .clip(true)
     .borderRadius($r('app.float.radius_small'))
+    .onVisibleAreaChange([0.0, 0.25], (isVisible: boolean, currentRatio: number) => {
+      this.imageVisible = isVisible && currentRatio >= 0.25;
+    })
     .onTouch((event: TouchEvent) => {
       if (event.type === TouchType.Up) {
         event.stopPropagation();

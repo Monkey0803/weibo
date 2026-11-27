@@ -14,8 +14,10 @@ import {
   HdsNavigationTitleBarOptions
 } from '@kit.UIDesignKit';
 import { appSettings } from '../model/AppSettings';
-import { FeedKind, ImagePreviewRouteParam, LoadState, PostRouteParam, RepostListRouteParam,
-  SocialListKind, SocialListRouteParam, UserRouteParam, VideoRouteParam } from '../model/WeiboModels';
+import { EntitySearchRouteParam, FeedKind, ImagePreviewRouteParam, LoadState, PostRouteParam,
+  RepostListRouteParam, SearchKind,
+  SocialListKind, SocialListRouteParam, SocialTextEntity, UserRouteParam,
+  VideoRouteParam } from '../model/WeiboModels';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
 import { authViewModel } from '../viewmodel/AuthViewModel';
 import { antiPeep } from '../service/AntiPeep';
@@ -58,6 +60,9 @@ import { HotSearchPageView } from '../views/HotSearchPageView';
 import { SocialListPageView } from '../views/SocialListPageView';
 import { RepostListPageView } from '../views/RepostListPageView';
 import { ComposePageView } from '../views/ComposePageView';
+import { EntitySearchPageView } from '../views/EntitySearchPageView';
+import { SocialRichText } from '../common/components/SocialRichText';
+import { socialEntityActionService } from '../service/SocialEntityActionService';
 
 @Entry
 @ComponentV2
@@ -76,6 +81,12 @@ struct Index {
   private feedSegments: SegmentButtonV2Items = new SegmentButtonV2Items([
     { text: $r('app.string.feed_following') },
     { text: $r('app.string.feed_hot') }
+  ]);
+  private searchSegments: SegmentButtonV2Items = new SegmentButtonV2Items([
+    { text: $r('app.string.search_kind_all') },
+    { text: $r('app.string.search_kind_realtime') },
+    { text: $r('app.string.search_kind_hot') },
+    { text: $r('app.string.search_kind_video') }
   ]);
 
   aboutToAppear(): void {
@@ -113,6 +124,12 @@ struct Index {
         console.error('closeCustomDialog (notice) failed: ' + error.code.toString());
       }
     }
+  }
+
+  private openEntity(entity: SocialTextEntity): void {
+    const hostContext: common.UIAbilityContext =
+      this.getUIContext().getHostContext() as common.UIAbilityContext;
+    socialEntityActionService.open(entity, this.navPathStack, hostContext, this.getUIContext());
   }
 
   private async presentNotice(request: NoticeRequest): Promise<void> {
@@ -186,17 +203,22 @@ struct Index {
   }
 
   private rootTitleOptions(): HdsNavigationTitleBarOptions {
-    if (this.currentTab === TabIndex.PROFILE && authViewModel.loggedIn &&
-      profileTabViewModel.state === LoadState.READY && profileTabViewModel.user.name.length > 0) {
-      return indexCustomTitleWithBottomOptions(() => {
-        this.rootTitleContent();
-      }, () => {
-        this.profileStatsTitle();
-      }, $r('app.float.profile_title_stats_height'));
+    if (this.currentTab === TabIndex.SEARCH) {
+      return indexCustomTitleWithBottomOptions(() => { this.searchTitle(); },
+        () => { this.searchKindsTitle(); }, $r('app.float.search_title_segment_height'));
     }
-    return indexCustomTitleOptions(() => {
-      this.rootTitleContent();
-    });
+    if (this.currentTab === TabIndex.PROFILE) {
+      if (authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
+        profileTabViewModel.user.name.length > 0) {
+        return indexCustomTitleWithBottomOptions(() => { this.profileTitle(); },
+          () => { this.profileStatsTitle(); }, $r('app.float.profile_title_stats_height'));
+      }
+      return indexCustomTitleOptions(() => { this.profileTitle(); });
+    }
+    if (this.currentTab === TabIndex.SETTINGS) {
+      return indexCustomTitleOptions(() => { this.settingsTitle(); });
+    }
+    return indexCustomTitleOptions(() => { this.homeTitle(); });
   }
 
   private previewTitleOptions(param: ImagePreviewRouteParam): HdsNavigationTitleBarOptions {
@@ -218,6 +240,31 @@ struct Index {
     return appSettings.titleBarAutoHide && !(this.currentTab === TabIndex.SEARCH && searchViewModel.focused);
   }
 
+  private searchSegmentIndex(): number {
+    if (searchViewModel.kind === SearchKind.REALTIME) {
+      return 1;
+    }
+    if (searchViewModel.kind === SearchKind.HOT) {
+      return 2;
+    }
+    if (searchViewModel.kind === SearchKind.VIDEO) {
+      return 3;
+    }
+    return 0;
+  }
+
+  private selectSearchSegment(index: number): void {
+    if (index === 1) {
+      searchViewModel.selectKind(SearchKind.REALTIME);
+    } else if (index === 2) {
+      searchViewModel.selectKind(SearchKind.HOT);
+    } else if (index === 3) {
+      searchViewModel.selectKind(SearchKind.VIDEO);
+    } else {
+      searchViewModel.selectKind(SearchKind.COMPREHENSIVE);
+    }
+  }
+
   private pageBackground(): ResourceColor {
     return appSettings.backgroundImagePath.length > 0 ? $r('app.color.hm_page_transparent') :
       $r('app.color.start_window_background');
@@ -234,9 +281,24 @@ struct Index {
   }
 
   private boundScrollers(): Scroller[] {
-    return [scrollers.home, scrollers.search, scrollers.profile, scrollers.settings,
-      scrollers.settingsAppearance, scrollers.settingsPrivacy, scrollers.hotSearch,
-      scrollers.socialList, scrollers.repostList, scrollers.detail, scrollers.profilePage];
+    if (this.currentTab === TabIndex.SEARCH) {
+      return [scrollers.search];
+    }
+    if (this.currentTab === TabIndex.PROFILE) {
+      return [scrollers.profile];
+    }
+    if (this.currentTab === TabIndex.SETTINGS) {
+      return [scrollers.settings];
+    }
+    return [scrollers.home];
+  }
+
+  private selectTab(index: number): void {
+    if (this.currentTab === index) {
+      return;
+    }
+    this.currentTab = index;
+    tabBarScrollController.showOnTabChange();
   }
 
   private railItems(): HdsSideMenuMainItem[] {
@@ -253,21 +315,8 @@ struct Index {
       itemId: id,
       label: label,
       symbol: new SymbolGlyphModifier(symbol),
-      action: () => this.currentTab = index
+      action: () => this.selectTab(index)
     });
-  }
-
-  @Builder
-  rootTitleContent() {
-    if (this.currentTab === TabIndex.SEARCH) {
-      this.searchTitle()
-    } else if (this.currentTab === TabIndex.PROFILE) {
-      this.profileTitle()
-    } else if (this.currentTab === TabIndex.SETTINGS) {
-      this.settingsTitle()
-    } else {
-      this.homeTitle()
-    }
   }
 
   @Builder
@@ -298,18 +347,28 @@ struct Index {
         }
       })
       Blank()
-      Button() {
+      Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.flame')).fontSize($r('app.float.icon_size_small'))
-          .fontColor([$r('app.color.hm_text_primary')])
+          .fontColor([$r('sys.color.font_primary')])
       }
       .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .width($r('app.float.title_action_size')).height($r('app.float.title_action_size'))
+      .padding(0)
+      .backgroundColor(appSettings.immersiveOn ? $r('app.color.hm_action_glass_fill') : Color.Transparent)
+      .backdropBlur(appSettings.immersiveOn ? BlurStyle.COMPONENT_THICK : BlurStyle.NONE)
+      .systemMaterial(MaterialController.glassInteractiveMaterial(appSettings.immersiveOn, true))
       .accessibilityText($r('app.string.hot_search_title'))
       .onClick(() => this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_HOT_SEARCH, '')))
-      Button() {
+      Button({ type: ButtonType.Circle }) {
         SymbolGlyph($r('sys.symbol.square_and_pencil')).fontSize($r('app.float.icon_size_small'))
-          .fontColor([$r('app.color.hm_text_primary')])
+          .fontColor([$r('sys.color.font_primary')])
       }
       .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .width($r('app.float.title_action_size')).height($r('app.float.title_action_size'))
+      .padding(0)
+      .backgroundColor(appSettings.immersiveOn ? $r('app.color.hm_action_glass_fill') : Color.Transparent)
+      .backdropBlur(appSettings.immersiveOn ? BlurStyle.COMPONENT_THICK : BlurStyle.NONE)
+      .systemMaterial(MaterialController.glassInteractiveMaterial(appSettings.immersiveOn, true))
       .accessibilityText($r('app.string.compose_title'))
       .onClick(() => {
         if (authViewModel.loggedIn) {
@@ -318,14 +377,19 @@ struct Index {
           this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_LOGIN, ''));
         }
       })
-      Button() {
+      Button({ type: ButtonType.Circle }) {
         AppIcon({
           source: $r('app.media.icon_refresh'),
           iconSize: $r('app.float.icon_size_small'),
-          tint: $r('app.color.hm_text_primary')
+          tint: $r('sys.color.font_primary')
         })
       }
       .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .width($r('app.float.title_action_size')).height($r('app.float.title_action_size'))
+      .padding(0)
+      .backgroundColor(appSettings.immersiveOn ? $r('app.color.hm_action_glass_fill') : Color.Transparent)
+      .backdropBlur(appSettings.immersiveOn ? BlurStyle.COMPONENT_THICK : BlurStyle.NONE)
+      .systemMaterial(MaterialController.glassInteractiveMaterial(appSettings.immersiveOn, true))
       .accessibilityText($r('app.string.action_refresh'))
       .onClick(() => feedViewModel.refresh())
     }
@@ -359,6 +423,21 @@ struct Index {
   }
 
   @Builder
+  searchKindsTitle() {
+    Row() {
+      AppSegmentButton({
+        items: this.searchSegments,
+        selectedIndex: this.searchSegmentIndex(),
+        config: { immersive: appSettings.immersiveOn, inMaterialScope: true },
+        onSelectedIndexChange: (index: number) => this.selectSearchSegment(index)
+      })
+    }
+    .width('100%')
+    .height('100%')
+    .padding({ left: $r('app.float.space_l'), right: $r('app.float.space_l') })
+  }
+
+  @Builder
   profileTitle() {
     Row({ space: $r('app.float.space_m') }) {
       if (authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
@@ -376,11 +455,16 @@ struct Index {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           if (profileTabViewModel.user.description.length > 0) {
-            Text(profileTabViewModel.user.description)
-              .fontSize($r('app.float.font_size_metric'))
-              .fontColor($r('app.color.hm_text_secondary'))
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
+            SocialRichText({
+              text: profileTabViewModel.user.description,
+              entities: profileTabViewModel.user.descriptionEntities,
+              fontSize: $r('app.float.font_size_metric'),
+              fontColor: $r('app.color.hm_text_secondary'),
+              maxLines: 1,
+              brandColor: ThemeColorController.brand(),
+              pressedColor: ThemeColorController.brandPressed(),
+              onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+            })
           }
         }
         .layoutWeight(1)
@@ -436,25 +520,22 @@ struct Index {
 
   @Builder
   homeContent() {
-    HomeTabView({ navPathStack: this.navPathStack, underTitleBar: CommonConstants.CONTENT_UNDER_TITLE_BAR })
+    HomeTabView({ navPathStack: this.navPathStack })
   }
 
   @Builder
   searchContent() {
-    SearchTabView({ navPathStack: this.navPathStack, underTitleBar: CommonConstants.CONTENT_UNDER_TITLE_BAR })
+    SearchTabView({ navPathStack: this.navPathStack })
   }
 
   @Builder
   profileContent() {
-    ProfileTabView({ navPathStack: this.navPathStack, underTitleBar: CommonConstants.CONTENT_UNDER_TITLE_BAR })
+    ProfileTabView({ navPathStack: this.navPathStack })
   }
 
   @Builder
   settingsContent() {
-    SettingsTabView({
-      navPathStack: this.navPathStack,
-      underTitleBar: CommonConstants.CONTENT_UNDER_TITLE_BAR
-    })
+    SettingsTabView({ navPathStack: this.navPathStack })
   }
 
   @Builder
@@ -471,12 +552,12 @@ struct Index {
         .tabBar(this.barBuilder($r('app.media.icon_sliders'), $r('app.string.tab_settings'), this.currentTab === TabIndex.SETTINGS))
     }
     .barPosition(BarPosition.End)
-    .scrollable(true)
+    .scrollable(false)
+    .animationDuration(0)
     .barOverlap(true)
     .barFloatingStyle(this.floatingStyle())
     .onChange((index: number) => {
-      this.currentTab = index;
-      tabBarScrollController.showOnTabChange();
+      this.selectTab(index);
     })
     .onAppear(() => tabBarScrollController.attach(this.getUIContext(), this.tabsController, appSettings.tabBarAutoHide))
     .onDisAppear(() => tabBarScrollController.detach())
@@ -489,7 +570,7 @@ struct Index {
     HdsSideMenu({
       items: this.railItems(),
       selectedIndex: this.currentTab,
-      $selectedIndex: (index: number) => this.currentTab = index
+      $selectedIndex: (index: number) => this.selectTab(index)
     })
   }
 
@@ -543,47 +624,51 @@ struct Index {
     if (name === RouterConstants.PAGE_DETAIL && pageInfos instanceof PostRouteParam) {
       HdsNavDestination() {
         Stack() {
+          this.BackgroundLayer()
           DetailPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
         }
         .width('100%').height('100%')
-        .backgroundColor(this.pageBackground())
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions($r('app.string.detail_title')))
       .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
       .bindToScrollable([scrollers.detail])
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_LOGIN) {
       HdsNavDestination() {
         Stack() {
+          this.BackgroundLayer()
           LoginPageView({ navPathStack: this.navPathStack })
         }
         .width('100%').height('100%')
-        .backgroundColor(this.pageBackground())
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions($r('app.string.login_title')))
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_PROFILE && pageInfos instanceof UserRouteParam) {
       HdsNavDestination() {
         Stack() {
+          this.BackgroundLayer()
           ProfilePageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
         }
         .width('100%').height('100%')
-        .backgroundColor(this.pageBackground())
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions(pageInfos.title))
       .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
       .bindToScrollable([scrollers.profilePage])
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_VIDEO && pageInfos instanceof VideoRouteParam) {
       HdsNavDestination() {
         Stack() {
+          this.BackgroundLayer()
           VideoPageView({ routeParam: pageInfos })
         }
         .width('100%').height('100%')
-        .backgroundColor(this.pageBackground())
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions($r('app.string.video_title')))
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_IMAGE_PREVIEW && pageInfos instanceof ImagePreviewRouteParam) {
       HdsNavDestination() {
         ImagePreviewView({
@@ -600,50 +685,105 @@ struct Index {
       .hideTitleBar(!this.previewControlsVisible)
       .backgroundColor($r('app.color.hm_video_background'))
     } else if (name === RouterConstants.PAGE_HOT_SEARCH) {
-      HdsNavDestination() { HotSearchPageView() }
-        .titleBar(indexTitleOptions($r('app.string.hot_search_title')))
-        .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
-        .bindToScrollable([scrollers.hotSearch])
-        .backgroundColor(this.pageBackground())
+      HdsNavDestination() {
+        Stack() {
+          this.BackgroundLayer()
+          HotSearchPageView({ navPathStack: this.navPathStack })
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      }
+      .titleBar(indexTitleOptions($r('app.string.hot_search_title')))
+      .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
+      .bindToScrollable([scrollers.hotSearch])
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_SOCIAL_LIST && pageInfos instanceof SocialListRouteParam) {
       HdsNavDestination() {
-        SocialListPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+        Stack() {
+          this.BackgroundLayer()
+          SocialListPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions(pageInfos.title))
       .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
       .bindToScrollable([scrollers.socialList])
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_REPOST_LIST && pageInfos instanceof RepostListRouteParam) {
       HdsNavDestination() {
-        RepostListPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+        Stack() {
+          this.BackgroundLayer()
+          RepostListPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
       }
       .titleBar(indexTitleOptions($r('app.string.reposts_title')))
       .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
       .bindToScrollable([scrollers.repostList])
-      .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
+    } else if (name === RouterConstants.PAGE_ENTITY_SEARCH && pageInfos instanceof EntitySearchRouteParam) {
+      HdsNavDestination() {
+        Stack() {
+          this.BackgroundLayer()
+          EntitySearchPageView({ navPathStack: this.navPathStack, routeParam: pageInfos })
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      }
+      .titleBar(indexTitleOptions(pageInfos.title))
+      .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
+      .bindToScrollable([scrollers.entitySearch])
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_COMPOSE) {
-      HdsNavDestination() { ComposePageView({ navPathStack: this.navPathStack }) }
+      HdsNavDestination() {
+        Stack() {
+          this.BackgroundLayer()
+          ComposePageView({ navPathStack: this.navPathStack })
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      }
         .titleBar(indexTitleOptions($r('app.string.compose_title')))
-        .backgroundColor(this.pageBackground())
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_SETTINGS_APPEARANCE) {
-      HdsNavDestination() { SettingsAppearanceView() }
-        .titleBar(indexTitleOptions($r('app.string.settings_appearance_title')))
-        .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
-        .bindToScrollable([scrollers.settingsAppearance])
-        .backgroundColor(this.pageBackground())
+      HdsNavDestination() {
+        Stack() {
+          this.BackgroundLayer()
+          SettingsAppearanceView()
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      }
+      .titleBar(indexTitleOptions($r('app.string.settings_appearance_title')))
+      .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
+      .bindToScrollable([scrollers.settingsAppearance])
+      .backgroundColor($r('app.color.start_window_background'))
     } else if (name === RouterConstants.PAGE_SETTINGS_PRIVACY) {
-      HdsNavDestination() { SettingsPrivacyView() }
-        .titleBar(indexTitleOptions($r('app.string.settings_privacy_title')))
-        .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
-        .bindToScrollable([scrollers.settingsPrivacy])
-        .backgroundColor(this.pageBackground())
+      HdsNavDestination() {
+        Stack() {
+          this.BackgroundLayer()
+          SettingsPrivacyView()
+        }
+        .width('100%').height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      }
+      .titleBar(indexTitleOptions($r('app.string.settings_privacy_title')))
+      .dynamicHideTitleBar(indexDynamicHideParams(appSettings.titleBarAutoHide))
+      .bindToScrollable([scrollers.settingsPrivacy])
+      .backgroundColor($r('app.color.start_window_background'))
     }
   }
 
   @Builder
   BackgroundLayer() {
-    if (appSettings.backgroundImagePath.length > 0) {
-      Stack() {
+    Stack() {
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor($r('app.color.start_window_background'))
+      if (appSettings.backgroundImagePath.length > 0) {
         Image(backgroundImageService.toImageSource(appSettings.backgroundImagePath))
           .width('100%')
           .height('100%')
@@ -655,10 +795,10 @@ struct Index {
           .height('100%')
           .backgroundColor($r('app.color.hm_background_scrim'))
       }
-      .width('100%')
-      .height('100%')
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     }
+    .width('100%')
+    .height('100%')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 
   build() {
@@ -674,7 +814,7 @@ struct Index {
       .titleBar(this.rootTitleOptions())
       .titleMode(HdsNavigationTitleMode.MINI)
       .hideBackButton(true)
-      .dynamicHideTitleBar(indexDynamicHideParams(this.titleBarAutoHide()))
+      .dynamicHideTitleBar(indexDynamicHideParams(this.titleBarAutoHide(), this.currentTab !== TabIndex.SEARCH))
       .mode(NavigationMode.Stack)
       .navDestination(this.pageMap)
       .bindToScrollable(this.boundScrollers())

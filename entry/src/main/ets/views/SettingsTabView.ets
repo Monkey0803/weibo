@@ -1,22 +1,19 @@
 /* 设置首页：常用选项与二级设置入口。 */
 import { common } from '@kit.AbilityKit';
 import { appSettings } from '../model/AppSettings';
-import { ChoiceSet, THEME_OPTIONS, LANGUAGE_OPTIONS, VIDEO_PLAYBACK_RATE_OPTIONS } from '../model/SettingsOptions';
+import { THEME_OPTIONS, LANGUAGE_OPTIONS, VIDEO_PLAYBACK_RATE_OPTIONS } from '../model/SettingsOptions';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
-import { MaterialController } from '../service/MaterialController';
 import { ResponsiveContent } from './ResponsiveContent';
 import { scrollers } from '../service/ScrollerRegistry';
 import { safeArea } from '../service/SafeAreaController';
 import { AppIcon } from './AppIcon';
-import { AppMenu } from '../common/components/AppMenu';
-import { choiceMenu } from '../common/components/ChoiceMenu';
 import { RouterConstants } from '../common/constants/RouterConstants';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { ThemeColorController } from '../service/ThemeColorController';
+import { SettingsOptionRow } from './SettingsOptionRow';
 
 @ComponentV2
 export struct SettingsTabView {
-  @Param underTitleBar: boolean = false;
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Local viewportHeightVp: number = 0;
   @Local contentHeightVp: number = 0;
@@ -45,26 +42,6 @@ export struct SettingsTabView {
   }
 
   @Builder
-  OptionRow(icon: Resource, title: ResourceStr, choice: ChoiceSet, currentId: string, pick: (id: string) => void) {
-    Row() {
-      this.Leading(icon, title)
-      Blank()
-      Text(choice.labelOf(currentId))
-        .fontSize($r('app.float.font_size_body'))
-        .fontColor($r('app.color.hm_text_secondary'))
-      AppIcon({
-        source: $r('app.media.icon_chevron_down'),
-        iconSize: $r('app.float.icon_size_small'),
-        tint: $r('app.color.hm_text_secondary')
-      })
-    }
-    .width('100%')
-    .height($r('app.float.row_height'))
-    .padding({ left: $r('app.float.space_m'), right: $r('app.float.space_m') })
-    .bindMenu(AppMenu(choiceMenu(choice, currentId, pick)), MaterialController.menuOptions(appSettings.immersiveOn))
-  }
-
-  @Builder
   LinkRow(icon: Resource, title: ResourceStr, route: string) {
     Row() {
       this.Leading(icon, title)
@@ -84,19 +61,32 @@ export struct SettingsTabView {
       Scroll(scrollers.settings) {
         Column() {
           Column() {
-            Row().height(this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0)
-              .margin({ bottom: $r('app.float.space_l') })
+            Row().height(safeArea.contentTopInsetVp)
             this.SectionTitle($r('app.string.section_common_settings'))
             Column() {
-              this.OptionRow($r('app.media.icon_moon'), $r('app.string.row_theme'), THEME_OPTIONS, appSettings.themeMode,
-                (id: string) => settingsViewModel.setTheme(this.hostContext(), id))
+              SettingsOptionRow({
+                icon: $r('app.media.icon_moon'),
+                title: $r('app.string.row_theme'),
+                choice: THEME_OPTIONS,
+                currentId: appSettings.themeMode,
+                onPick: (id: string) => settingsViewModel.setTheme(this.hostContext(), id)
+              })
               Divider().color($r('app.color.hm_divider'))
-              this.OptionRow($r('app.media.icon_globe'), $r('app.string.row_language'), LANGUAGE_OPTIONS,
-                appSettings.languageMode, (id: string) => settingsViewModel.setLanguage(id))
+              SettingsOptionRow({
+                icon: $r('app.media.icon_globe'),
+                title: $r('app.string.row_language'),
+                choice: LANGUAGE_OPTIONS,
+                currentId: appSettings.languageMode,
+                onPick: (id: string) => settingsViewModel.setLanguage(id)
+              })
               Divider().color($r('app.color.hm_divider'))
-              this.OptionRow($r('app.media.icon_play'), $r('app.string.row_video_playback_rate'),
-                VIDEO_PLAYBACK_RATE_OPTIONS, appSettings.videoPlaybackRate,
-                (id: string) => settingsViewModel.setVideoPlaybackRate(id))
+              SettingsOptionRow({
+                icon: $r('app.media.icon_play'),
+                title: $r('app.string.row_video_playback_rate'),
+                choice: VIDEO_PLAYBACK_RATE_OPTIONS,
+                currentId: appSettings.videoPlaybackRate,
+                onPick: (id: string) => settingsViewModel.setVideoPlaybackRate(id)
+              })
             }
             .width('100%')
             .backgroundColor($r('app.color.hm_card_background'))

@@ -1,4 +1,4 @@
-import { LoadState, SearchKind, WeiboPost } from '../model/WeiboModels';
+import { LoadState, WeiboPost } from '../model/WeiboModels';
 import { searchViewModel } from '../viewmodel/SearchViewModel';
 import { scrollers } from '../service/ScrollerRegistry';
 import { safeArea } from '../service/SafeAreaController';
@@ -8,12 +8,10 @@ import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
 import { gripSensor } from '../service/GripSensor';
 import { GlassIconButton } from '../common/components/GlassIconButton';
-import { ThemeColorController } from '../service/ThemeColorController';
 
 @ComponentV2
 export struct SearchTabView {
   @Param navPathStack: NavPathStack = new NavPathStack();
-  @Param underTitleBar: boolean = true;
   @Local showBackToTop: boolean = false;
   @Local viewportHeightVp: number = 0;
   @Local controlsHeightVp: number = 0;
@@ -44,30 +42,11 @@ export struct SearchTabView {
       Stack({ alignContent: gripSensor.bottomAlign }) {
         List({ scroller: scrollers.search }) {
           ListItem() {
-            Column({ space: $r('app.float.space_m') }) {
-              Row().height(this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0)
+            Column() {
+              Row().height(safeArea.contentTopInsetVp)
+              Row().height($r('app.float.search_title_segment_height'))
                 .margin({ bottom: $r('app.float.space_l') })
-              Row({ space: $r('app.float.space_s') }) {
-                Button($r('app.string.search_kind_all')).buttonStyle(ButtonStyleMode.TEXTUAL)
-                  .fontColor(searchViewModel.kind === SearchKind.COMPREHENSIVE ? ThemeColorController.brand() :
-                    $r('app.color.hm_text_secondary'))
-                  .onClick(() => searchViewModel.selectKind(SearchKind.COMPREHENSIVE))
-                Button($r('app.string.search_kind_realtime')).buttonStyle(ButtonStyleMode.TEXTUAL)
-                  .fontColor(searchViewModel.kind === SearchKind.REALTIME ? ThemeColorController.brand() :
-                    $r('app.color.hm_text_secondary'))
-                  .onClick(() => searchViewModel.selectKind(SearchKind.REALTIME))
-                Button($r('app.string.search_kind_hot')).buttonStyle(ButtonStyleMode.TEXTUAL)
-                  .fontColor(searchViewModel.kind === SearchKind.HOT ? ThemeColorController.brand() :
-                    $r('app.color.hm_text_secondary'))
-                  .onClick(() => searchViewModel.selectKind(SearchKind.HOT))
-                Button($r('app.string.search_kind_video')).buttonStyle(ButtonStyleMode.TEXTUAL)
-                  .fontColor(searchViewModel.kind === SearchKind.VIDEO ? ThemeColorController.brand() :
-                    $r('app.color.hm_text_secondary'))
-                  .onClick(() => searchViewModel.selectKind(SearchKind.VIDEO))
-              }.width('100%')
-              if (searchViewModel.state === LoadState.IDLE) {
-                Text($r('app.string.search_intro')).fontColor($r('app.color.hm_text_secondary')).width('100%')
-              } else if (searchViewModel.state === LoadState.LOADING) {
+              if (searchViewModel.state === LoadState.LOADING) {
                 Row({ space: $r('app.float.space_s') }) {
                   LoadingProgress().width($r('app.float.progress_size')).height($r('app.float.progress_size'))
                   Text(searchViewModel.showingPreviousResults

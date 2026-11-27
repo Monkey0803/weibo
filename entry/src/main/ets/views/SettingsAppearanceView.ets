@@ -3,7 +3,7 @@ import { promptAction } from '@kit.ArkUI';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { common } from '@kit.AbilityKit';
 import { appSettings } from '../model/AppSettings';
-import { ChoiceSet, THEME_COLOR_OPTIONS, MATERIAL_TYPE_OPTIONS, MATERIAL_LEVEL_OPTIONS, CARD_GLOW_INTENSITY_OPTIONS,
+import { THEME_COLOR_OPTIONS, MATERIAL_TYPE_OPTIONS, MATERIAL_LEVEL_OPTIONS, CARD_GLOW_INTENSITY_OPTIONS,
   CARD_GLOW_PALETTE_OPTIONS } from '../model/SettingsOptions';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
 import { MaterialController } from '../service/MaterialController';
@@ -12,11 +12,10 @@ import { safeArea } from '../service/SafeAreaController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { scrollers } from '../service/ScrollerRegistry';
 import { AppIcon } from './AppIcon';
-import { AppMenu } from '../common/components/AppMenu';
-import { choiceMenu } from '../common/components/ChoiceMenu';
 import { AppConfirmDialog } from '../common/components/AppConfirmDialog';
 import { BackgroundPickOutcome } from '../common/constants/SettingsConstants';
 import { ThemeColorController } from '../service/ThemeColorController';
+import { SettingsOptionRow } from './SettingsOptionRow';
 
 @ComponentV2
 export struct SettingsAppearanceView {
@@ -142,29 +141,9 @@ export struct SettingsAppearanceView {
   }
 
   @Builder
-  OptionRow(icon: Resource, title: ResourceStr, choice: ChoiceSet, currentId: string, pick: (id: string) => void) {
-    Row() {
-      this.Leading(icon, title)
-      Blank()
-      Text(choice.labelOf(currentId))
-        .fontSize($r('app.float.font_size_body'))
-        .fontColor($r('app.color.hm_text_secondary'))
-      AppIcon({
-        source: $r('app.media.icon_chevron_down'),
-        iconSize: $r('app.float.icon_size_small'),
-        tint: $r('app.color.hm_text_secondary')
-      })
-    }
-    .width('100%')
-    .height($r('app.float.row_height'))
-    .padding({ left: $r('app.float.space_m'), right: $r('app.float.space_m') })
-    .bindMenu(AppMenu(choiceMenu(choice, currentId, pick)), MaterialController.menuOptions(appSettings.immersiveOn))
-  }
-
-  @Builder
   BackgroundRow() {
     Row() {
-      this.Leading($r('app.media.icon_background'), $r('app.string.row_background_image'))
+      this.Leading($r('app.media.icon_image'), $r('app.string.row_background_image'))
       Blank()
       Text(appSettings.backgroundImagePath.length > 0 ? $r('app.string.background_configured') :
         $r('app.string.background_not_set'))
@@ -185,7 +164,7 @@ export struct SettingsAppearanceView {
   @Builder
   ClearBackgroundRow() {
     Row() {
-      this.Leading($r('app.media.icon_background'), $r('app.string.row_remove_background'), false)
+      this.Leading($r('app.media.icon_image'), $r('app.string.row_remove_background'), false)
       Blank()
     }
     .width('100%')
@@ -197,11 +176,21 @@ export struct SettingsAppearanceView {
   @Builder
   AdvancedContent() {
     Column() {
-      this.OptionRow($r('app.media.icon_rings'), $r('app.string.row_material_type'),
-        MATERIAL_TYPE_OPTIONS, appSettings.materialType, (id: string) => settingsViewModel.setMaterialType(id))
+      SettingsOptionRow({
+        icon: $r('app.media.icon_rings'),
+        title: $r('app.string.row_material_type'),
+        choice: MATERIAL_TYPE_OPTIONS,
+        currentId: appSettings.materialType,
+        onPick: (id: string) => settingsViewModel.setMaterialType(id)
+      })
       Divider().color($r('app.color.hm_divider'))
-      this.OptionRow($r('app.media.icon_sliders'), $r('app.string.row_material_level'),
-        MATERIAL_LEVEL_OPTIONS, appSettings.materialLevel, (id: string) => settingsViewModel.setMaterialLevel(id))
+      SettingsOptionRow({
+        icon: $r('app.media.icon_sliders'),
+        title: $r('app.string.row_material_level'),
+        choice: MATERIAL_LEVEL_OPTIONS,
+        currentId: appSettings.materialLevel,
+        onPick: (id: string) => settingsViewModel.setMaterialLevel(id)
+      })
       Divider().color($r('app.color.hm_divider'))
       Row() {
         this.Leading($r('app.media.icon_sun'), $r('app.string.row_dialog_preview'))
@@ -234,11 +223,16 @@ export struct SettingsAppearanceView {
       Scroll(scrollers.settingsAppearance) {
         Column() {
           Column() {
-            Row().height(CommonConstants.TITLE_BAR_HEIGHT_VP).margin({ bottom: $r('app.float.space_l') })
+            Row().height(safeArea.contentTopInsetVp)
             this.SectionTitle($r('app.string.section_personalization'))
             Column() {
-              this.OptionRow($r('app.media.icon_rings'), $r('app.string.row_theme_color'), THEME_COLOR_OPTIONS,
-                appSettings.themeColor, (id: string) => settingsViewModel.setThemeColor(id))
+              SettingsOptionRow({
+                icon: $r('app.media.icon_rings'),
+                title: $r('app.string.row_theme_color'),
+                choice: THEME_COLOR_OPTIONS,
+                currentId: appSettings.themeColor,
+                onPick: (id: string) => settingsViewModel.setThemeColor(id)
+              })
               Divider().color($r('app.color.hm_divider'))
               this.BackgroundRow()
               if (appSettings.backgroundImagePath.length > 0) {
@@ -286,13 +280,21 @@ export struct SettingsAppearanceView {
                 appSettings.cardGlowEnabled, (value: boolean) => settingsViewModel.setCardGlowEnabled(value))
               if (appSettings.cardGlowEnabled) {
                 Divider().color($r('app.color.hm_divider'))
-                this.OptionRow($r('app.media.icon_sliders'), $r('app.string.row_card_glow_intensity'),
-                  CARD_GLOW_INTENSITY_OPTIONS, appSettings.cardGlowIntensity,
-                  (id: string) => settingsViewModel.setCardGlowIntensity(id))
+                SettingsOptionRow({
+                  icon: $r('app.media.icon_sliders'),
+                  title: $r('app.string.row_card_glow_intensity'),
+                  choice: CARD_GLOW_INTENSITY_OPTIONS,
+                  currentId: appSettings.cardGlowIntensity,
+                  onPick: (id: string) => settingsViewModel.setCardGlowIntensity(id)
+                })
                 Divider().color($r('app.color.hm_divider'))
-                this.OptionRow($r('app.media.icon_rings'), $r('app.string.row_card_glow_palette'),
-                  CARD_GLOW_PALETTE_OPTIONS, appSettings.cardGlowPalette,
-                  (id: string) => settingsViewModel.setCardGlowPalette(id))
+                SettingsOptionRow({
+                  icon: $r('app.media.icon_rings'),
+                  title: $r('app.string.row_card_glow_palette'),
+                  choice: CARD_GLOW_PALETTE_OPTIONS,
+                  currentId: appSettings.cardGlowPalette,
+                  onPick: (id: string) => settingsViewModel.setCardGlowPalette(id)
+                })
               }
             }
             .width('100%')

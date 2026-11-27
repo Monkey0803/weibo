@@ -16,7 +16,21 @@
  */
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/huxiaohui/.ohos/config/default_weibo_Cc9CXP9FuSxBhlCsWOZgeL6LGbZ6_zwdYXz391r27Qo=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BF840331B1B7CA012731681EFA3483DBC7C3F10E525221A310B95B5751C17B67248819EB9C64A3C",
+          "profile": "/Users/huxiaohui/.ohos/config/default_weibo_Cc9CXP9FuSxBhlCsWOZgeL6LGbZ6_zwdYXz391r27Qo=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/huxiaohui/.ohos/config/default_weibo_Cc9CXP9FuSxBhlCsWOZgeL6LGbZ6_zwdYXz391r27Qo=.p12",
+          "storePassword": "0000001BE6469B706FD62D7BADA4DF06B02DC235B79875CDD209B84EB5FDA65AF406F05E951ABB142492C2"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",

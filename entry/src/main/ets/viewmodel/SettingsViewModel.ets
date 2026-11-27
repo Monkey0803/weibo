@@ -11,8 +11,11 @@ import { settingsStore } from '../service/SettingsStore';
 import { ThemeController } from '../service/ThemeController';
 import { LocaleController } from '../service/LocaleController';
 import { MaterialController } from '../service/MaterialController';
+import { tabBarScrollController } from '../service/TabBarScrollController';
 import { antiPeep } from '../service/AntiPeep';
 import { gripSensor } from '../service/GripSensor';
+import { backgroundImageService, BackgroundPickResult } from '../service/BackgroundImageService';
+import { BackgroundPickOutcome } from '../common/constants/SettingsConstants';
 
 @ObservedV2
 export class SettingsViewModel {
@@ -22,6 +25,8 @@ export class SettingsViewModel {
   @Trace stateCaption: ResourceStr = '';
   /** 设备材质等级说明（高 / 中 / 低算力，由设备决定、只能查不能设）。 */
   @Trace levelCaption: ResourceStr = '';
+  /** 防止连续点击重复打开系统图库。 */
+  @Trace backgroundPickerActive: boolean = false;
 
   /** 启动时装配：恢复落盘设置 → 应用主题与语言 → 恢复防窥订阅（不弹窗）。 */
   init(context: common.Context): void {
@@ -30,6 +35,12 @@ export class SettingsViewModel {
 
   private async load(context: common.Context): Promise<void> {
     await settingsStore.load(context);
+    if (appSettings.backgroundImagePath.length > 0 &&
+      !backgroundImageService.exists(appSettings.backgroundImagePath)) {
+      appSettings.backgroundImagePath = '';
+      settingsStore.save();
+    }
+    tabBarScrollController.sync(appSettings.tabBarAutoHide);
     ThemeController.apply(context, appSettings.themeMode);
     LocaleController.apply(appSettings.languageMode);
     this.immersiveSupported = MaterialController.immersiveSupported();
@@ -76,6 +87,43 @@ export class SettingsViewModel {
     settingsStore.save();
   }
 
+  setThemeColor(id: string): void {
+    appSettings.themeColor = id;
+    MaterialController.invalidateThemeColor();
+    settingsStore.save();
+  }
+
+  async pickBackgroundImage(context: common.Context): Promise<BackgroundPickOutcome> {
+    if (this.backgroundPickerActive) {
+      return BackgroundPickOutcome.CANCELLED;
+    }
+    this.backgroundPickerActive = true;
+    const result: BackgroundPickResult = await backgroundImageService.pick(context);
+    this.backgroundPickerActive = false;
+    if (result.failed) {
+      return BackgroundPickOutcome.FAILED;
+    }
+    if (result.path.length === 0) {
+      return BackgroundPickOutcome.CANCELLED;
+    }
+    const previous: string = appSettings.backgroundImagePath;
+    appSettings.backgroundImagePath = result.path;
+    settingsStore.save();
+    if (previous.length > 0 && previous !== result.path) {
+      backgroundImageService.remove(context, previous);
+    }
+    return BackgroundPickOutcome.APPLIED;
+  }
+
+  clearBackgroundImage(context: common.Context): void {
+    const previous: string = appSettings.backgroundImagePath;
+    appSettings.backgroundImagePath = '';
+    settingsStore.save();
+    if (previous.length > 0) {
+      backgroundImageService.remove(context, previous);
+    }
+  }
+
   setLanguage(id: string): void {
     appSettings.languageMode = id;
     LocaleController.apply(id);
@@ -89,6 +137,17 @@ export class SettingsViewModel {
 
   setLightEffectEnabled(value: boolean): void {
     appSettings.lightEffectEnabled = value;
+    settingsStore.save();
+  }
+
+  setTitleBarAutoHide(value: boolean): void {
+    appSettings.titleBarAutoHide = value;
+    settingsStore.save();
+  }
+
+  setTabBarAutoHide(value: boolean): void {
+    appSettings.tabBarAutoHide = value;
+    tabBarScrollController.sync(value);
     settingsStore.save();
   }
 
@@ -114,6 +173,11 @@ export class SettingsViewModel {
 
   setCardGlowPalette(id: string): void {
     appSettings.cardGlowPalette = id;
+    settingsStore.save();
+  }
+
+  setVideoPlaybackRate(id: string): void {
+    appSettings.videoPlaybackRate = id;
     settingsStore.save();
   }
 

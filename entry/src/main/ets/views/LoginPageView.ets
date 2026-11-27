@@ -4,6 +4,8 @@ import { authViewModel } from '../viewmodel/AuthViewModel';
 import { notificationService } from '../service/NotificationService';
 import { safeArea } from '../service/SafeAreaController';
 import { ResponsiveContent } from './ResponsiveContent';
+import { LoadState } from '../model/WeiboModels';
+import { ThemeColorController } from '../service/ThemeColorController';
 
 @ComponentV2
 export struct LoginPageView {
@@ -15,10 +17,13 @@ export struct LoginPageView {
   private async finish(): Promise<void> {
     this.checking = true;
     await authViewModel.refresh();
-    if (authViewModel.loggedIn) {
+    if (authViewModel.state === LoadState.ERROR) {
+      notificationService.showError(this.getUIContext(), $r('app.string.login_check_failed'));
+    } else if (authViewModel.loggedIn) {
+      notificationService.showSuccess(this.getUIContext(), $r('app.string.login_success_continue'));
       this.navPathStack.pop();
     } else {
-      notificationService.show(this.getUIContext(), $r('app.string.login_not_detected'));
+      notificationService.showInfo(this.getUIContext(), $r('app.string.login_not_detected'));
     }
     this.checking = false;
   }
@@ -33,7 +38,7 @@ export struct LoginPageView {
           .width('100%')
         Text($r('app.string.web_login_notice'))
           .fontSize($r('app.float.font_size_caption'))
-          .fontColor($r('app.color.hm_brand'))
+          .fontColor(ThemeColorController.brand())
         Web({ src: WeiboSession.LOGIN_URL, controller: this.controller })
           .javaScriptAccess(true)
           .domStorageAccess(true)

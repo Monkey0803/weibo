@@ -22,6 +22,11 @@ export class GripSensor {
   /** 是否**左手**握持：只有它为 true 时才镜像主操作。 */
   @Trace gripLeft: boolean = false;
 
+  /** 悬浮主操作的落点：左手握持靠左，其余状态靠右。 */
+  get bottomAlign(): Alignment {
+    return this.gripLeft ? Alignment.BottomStart : Alignment.BottomEnd;
+  }
+
   setEnabled(enabled: boolean): void {
     if (!enabled) {
       this.stop();

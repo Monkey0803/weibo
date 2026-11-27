@@ -12,7 +12,7 @@ import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
 export class ImageSupport {
-  /** 文件头判定：GIF87a/GIF89a、或 RIFF....WEBP。 */
+  /** 文件头判定：GIF87a/GIF89a、或带动画标记的 VP8X WebP。 */
   static isAnimatedFormat(header: ArrayBuffer): boolean {
     const bytes: Uint8Array = new Uint8Array(header);
     if (bytes.length >= 6) {
@@ -21,10 +21,12 @@ export class ImageSupport {
         return true;
       }
     }
-    if (bytes.length >= 12) {
+    if (bytes.length >= 21) {
       const isRiff: boolean = bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46;
       const isWebp: boolean = bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
-      if (isRiff && isWebp) {
+      const isVp8x: boolean = bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38 && bytes[15] === 0x58;
+      const hasAnimation: boolean = (bytes[20] & 0x02) !== 0;
+      if (isRiff && isWebp && isVp8x && hasAnimation) {
         return true;
       }
     }

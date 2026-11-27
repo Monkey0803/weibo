@@ -18,6 +18,7 @@ export class ScrollerRegistry {
   readonly hotSearch: Scroller = new Scroller();
   readonly socialList: Scroller = new Scroller();
   readonly repostList: Scroller = new Scroller();
+  readonly entitySearch: Scroller = new Scroller();
   readonly detail: Scroller = new Scroller();
   readonly profilePage: Scroller = new Scroller();
 }

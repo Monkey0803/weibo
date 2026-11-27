@@ -14,7 +14,6 @@ import { GlassIconButton } from '../common/components/GlassIconButton';
 @ComponentV2
 export struct HomeTabView {
   @Param navPathStack: NavPathStack = new NavPathStack();
-  @Param underTitleBar: boolean = true;
   @Local showBackToTop: boolean = false;
   @Local viewportHeightVp: number = 0;
   @Local statusHeightVp: number = 0;
@@ -88,8 +87,7 @@ export struct HomeTabView {
           List({ scroller: scrollers.home }) {
           ListItem() {
             Column({ space: $r('app.float.space_m') }) {
-              Row().height(this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0)
-                .margin({ bottom: $r('app.float.space_l') })
+              Row().height(safeArea.contentTopInsetVp).margin({ bottom: $r('app.float.space_xs') })
               this.statusContent()
             }.width('100%')
           }

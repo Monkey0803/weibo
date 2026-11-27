@@ -2,12 +2,21 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#F1F3F5"
+      "value": "#FFFFFF"
     },
     {
       "name": "hm_brand",
       "value": "#FF007A83"
     },
+    { "name": "hm_brand_blue", "value": "#FF1769AA" },
+    { "name": "hm_brand_purple", "value": "#FF7047A5" },
+    { "name": "hm_brand_pink", "value": "#FFB32664" },
+    { "name": "hm_brand_orange", "value": "#FFB84F00" },
+    { "name": "hm_brand_pressed", "value": "#99007A83" },
+    { "name": "hm_brand_blue_pressed", "value": "#991769AA" },
+    { "name": "hm_brand_purple_pressed", "value": "#997047A5" },
+    { "name": "hm_brand_pink_pressed", "value": "#99B32664" },
+    { "name": "hm_brand_orange_pressed", "value": "#99B84F00" },
     {
       "name": "hm_text_primary",
       "value": "#E6000000"
@@ -18,11 +27,11 @@
     },
     {
       "name": "hm_card_background",
-      "value": "#F2FFFFFF"
+      "value": "#F3F5F7"
     },
     {
       "name": "hm_divider",
-      "value": "#0D000000"
+      "value": "#14000000"
     },
     {
       "name": "hm_page_transparent",
@@ -37,6 +46,15 @@
       "value": "#FF121318"
     },
     { "name": "hm_brand_soft", "value": "#1A007A83" },
+    { "name": "hm_brand_blue_soft", "value": "#1A1769AA" },
+    { "name": "hm_brand_purple_soft", "value": "#1A7047A5" },
+    { "name": "hm_brand_pink_soft", "value": "#1AB32664" },
+    { "name": "hm_brand_orange_soft", "value": "#1AB84F00" },
+    { "name": "hm_brand_blue_glow", "value": "#3D1769AA" },
+    { "name": "hm_brand_purple_glow", "value": "#3D7047A5" },
+    { "name": "hm_brand_pink_glow", "value": "#3DB32664" },
+    { "name": "hm_brand_orange_glow", "value": "#3DB84F00" },
+    { "name": "hm_background_scrim", "value": "#33FFFFFF" },
     { "name": "hm_scrim", "value": "#66000000" },
     { "name": "hm_error", "value": "#FFC42B1C" },
     { "name": "hm_video_background", "value": "#FF000000" },
@@ -44,6 +62,15 @@
     { "name": "hm_card_glow_cool", "value": "#3D52D6FF" },
     { "name": "hm_card_glow_warm", "value": "#3DFF9B6A" },
     { "name": "hm_media_placeholder", "value": "#14000000" },
-    { "name": "hm_preview_control", "value": "#99000000" }
+    { "name": "hm_preview_control", "value": "#99000000" },
+    { "name": "hm_action_glass_stroke", "value": "#1F000000" },
+    { "name": "hm_action_glass_shadow", "value": "#1A0B1B2E" },
+    { "name": "hm_action_glass_fill", "value": "#99F2F5FA" },
+    { "name": "hm_card_glass", "value": "#D9FFFFFF" },
+    { "name": "hm_search_background", "value": "#D9F3F5F7" },
+    { "name": "hm_danger", "value": "#FFC42B1C" },
+    { "name": "hm_live_active", "value": "#FFE53935" },
+    { "name": "hm_live_ended", "value": "#CC424750" },
+    { "name": "hm_live_unknown", "value": "#FF8E24AA" }
   ]
 }

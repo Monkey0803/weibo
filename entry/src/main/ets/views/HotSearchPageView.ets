@@ -1,11 +1,14 @@
-import { LoadState, WeiboHotTopic } from '../model/WeiboModels';
+import { EntitySearchRouteParam, LoadState, WeiboHotTopic } from '../model/WeiboModels';
 import { HotSearchViewModel } from '../viewmodel/HotSearchViewModel';
 import { scrollers } from '../service/ScrollerRegistry';
+import { safeArea } from '../service/SafeAreaController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { ThemeColorController } from '../service/ThemeColorController';
+import { RouterConstants } from '../common/constants/RouterConstants';
 
 @ComponentV2
 export struct HotSearchPageView {
+  @Param navPathStack: NavPathStack = new NavPathStack();
   private viewModel: HotSearchViewModel = new HotSearchViewModel();
   @Local viewportHeightVp: number = 0;
 
@@ -13,9 +16,14 @@ export struct HotSearchPageView {
     this.viewModel.load();
   }
 
+  private openTopic(topic: WeiboHotTopic): void {
+    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_ENTITY_SEARCH,
+      new EntitySearchRouteParam(topic.word, '#' + topic.word + '#')));
+  }
+
   build() {
     List({ scroller: scrollers.hotSearch }) {
-      ListItem() { Row().height(CommonConstants.TITLE_BAR_HEIGHT_VP) }
+      ListItem() { Row().height(safeArea.contentTopInsetVp) }
         .margin({ bottom: $r('app.float.space_l') })
       if (this.viewModel.state === LoadState.LOADING) {
         ListItem() { LoadingProgress().width('100%').margin($r('app.float.space_xl')) }
@@ -46,7 +54,7 @@ export struct HotSearchPageView {
             if (topic.label.length > 0) {
               Text(topic.label).fontSize($r('app.float.font_size_metric')).fontColor(ThemeColorController.brand())
             }
-          }.width('100%').padding($r('app.float.space_m'))
+          }.width('100%').padding($r('app.float.space_m')).onClick(() => this.openTopic(topic))
         }
       }, (topic: WeiboHotTopic) => topic.word)
       if (this.viewModel.topics.length === 0) {

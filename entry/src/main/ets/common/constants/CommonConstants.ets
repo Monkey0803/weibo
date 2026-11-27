@@ -18,7 +18,7 @@ export class CommonConstants {
   /** 信息流滚动超过约一屏后显示返回顶部按钮（vp）。 */
   static readonly BACK_TO_TOP_SHOW_OFFSET_VP: number = 600;
 
-  /** HDS 紧凑标题栏（MINI）高度（vp）——HDS 规范固定值，用于可滚动内容的首屏顶部占位。 */
+  /** HDS 紧凑标题栏（MINI）高度（vp），用于内容顶部占位与动态隐藏距离。 */
   static readonly TITLE_BAR_HEIGHT_VP: number = 56;
 
   /** 短页留出约四分之一屏滚动范围，避免刚收起标题栏就触底并被 HDS 自动显示。 */
@@ -32,20 +32,11 @@ export class CommonConstants {
   }
 
   /**
-   * 标题栏与内容的关系：
-   * - true  —— 内容穿透标题栏（沉浸式动态模糊）：标题栏的 enableComponentSafeArea 为 false，
-   *            内容全屏布局、滚动时穿过标题栏下方，由 scrollEffectOpts 触发模糊。
-   * - false —— 内容避让标题栏：enableComponentSafeArea 为 true，内容从标题栏下方开始。
-   * 两种模式互斥；切换这一项即可（视图的顶部预留由 underTitleBar 参数联动）。
-   */
-  static readonly CONTENT_UNDER_TITLE_BAR: boolean = true;
-
-  /**
    * 标题栏 / 状态栏的动态显隐（沉浸光感的一环）。
    * - true  —— 上滑到固定位置隐藏、下滑到固定位置显示（HideMode.SCROLL_UP_TO）。
-   *            仅在有内容滚动联动的穿透模式下有意义（需配合 bindToScrollable）。
+   *            需配合 bindToScrollable。
    * - false —— 标题栏 / 状态栏常驻。
-   * 与 CONTENT_UNDER_TITLE_BAR 同时为 true 时才会挂上 dynamicHideTitleBar。
+   * 与内容是否穿透标题栏无关。
    */
   static readonly TITLE_BAR_DYNAMIC_HIDE: boolean = true;
 

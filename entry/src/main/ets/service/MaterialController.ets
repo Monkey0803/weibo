@@ -31,13 +31,21 @@ import { hdsMaterial, SystemMaterialParams } from '@kit.UIDesignKit';
 import { uiMaterial } from '@kit.ArkUI';
 import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import { MaterialKind, MaterialGrade } from '../common/constants/SettingsConstants';
+import { ThemeColorController } from './ThemeColorController';
 
 export class MaterialController {
   private static cachedTypes: hdsMaterial.MaterialType[] | undefined = undefined;
   private static cachedGlassSupported: boolean | undefined = undefined;
   private static cachedGlassMaterial: uiMaterial.Material | undefined = undefined;
+  private static cachedSegmentMaterial: uiMaterial.Material | undefined = undefined;
+  private static cachedDialogMaterial: uiMaterial.Material | undefined = undefined;
   private static cachedState: uiMaterial.MaterialState | undefined = undefined;
   private static cachedLevel: uiMaterial.MaterialLevel | undefined = undefined;
+
+  /** 强调色变化后丢弃包含旧光效颜色的材质对象。 */
+  static invalidateThemeColor(): void {
+    MaterialController.cachedSegmentMaterial = undefined;
+  }
 
   /** 设备支持的 HDS 材质类型；不支持时返回空数组（并缓存，避免反复探测）。 */
   static supportedTypes(): hdsMaterial.MaterialType[] {
@@ -236,7 +244,7 @@ export class MaterialController {
       return MaterialController.glassMaterial(true);
     }
     try {
-      const light: uiMaterial.LightEffectOptions = { color: $r('app.color.hm_brand') };
+      const light: uiMaterial.LightEffectOptions = { color: ThemeColorController.brand() };
       const options: uiMaterial.ImmersiveOptions = {
         style: uiMaterial.ImmersiveStyle.ULTRA_THIN,
         colorInvert: true,
@@ -248,6 +256,36 @@ export class MaterialController {
     } catch (err) {
       const error: BusinessError = err as BusinessError;
       console.error('uiMaterial.ImmersiveMaterial (glass+light) failed: ' + error.code.toString());
+      return undefined;
+    }
+  }
+
+  /** 标题栏内 SegmentButton 使用的可交互沉浸材质。 */
+  static segmentMaterial(enabled: boolean): uiMaterial.Material | undefined {
+    if (!MaterialController.materialUsable()) {
+      return undefined;
+    }
+    if (!enabled) {
+      return uiMaterial.Material.empty;
+    }
+    const cached: uiMaterial.Material | undefined = MaterialController.cachedSegmentMaterial;
+    if (cached !== undefined) {
+      return cached;
+    }
+    try {
+      const light: uiMaterial.LightEffectOptions = { color: ThemeColorController.brand() };
+      const options: uiMaterial.ImmersiveOptions = {
+        style: uiMaterial.ImmersiveStyle.ULTRA_THIN,
+        colorInvert: true,
+        interactive: true,
+        lightEffect: light
+      };
+      const material: uiMaterial.Material = new uiMaterial.ImmersiveMaterial(options);
+      MaterialController.cachedSegmentMaterial = material;
+      return material;
+    } catch (err) {
+      const error: BusinessError = err as BusinessError;
+      console.error('uiMaterial.ImmersiveMaterial (segment) failed: ' + error.code.toString());
       return undefined;
     }
   }
@@ -312,6 +350,30 @@ export class MaterialController {
       console.error('uiMaterial.ImmersiveMaterial (menu) failed: ' + error.code.toString());
     }
     return options;
+  }
+
+  /** 自定义弹窗背板材质；关闭总开关时显式覆盖应用级默认材质。 */
+  static dialogMaterial(enabled: boolean): uiMaterial.Material | undefined {
+    if (!MaterialController.materialUsable()) {
+      return undefined;
+    }
+    if (!enabled) {
+      return uiMaterial.Material.empty;
+    }
+    const cached: uiMaterial.Material | undefined = MaterialController.cachedDialogMaterial;
+    if (cached !== undefined) {
+      return cached;
+    }
+    try {
+      const options: uiMaterial.ImmersiveOptions = { style: uiMaterial.ImmersiveStyle.ULTRA_THICK };
+      const material: uiMaterial.Material = new uiMaterial.ImmersiveMaterial(options);
+      MaterialController.cachedDialogMaterial = material;
+      return material;
+    } catch (err) {
+      const error: BusinessError = err as BusinessError;
+      console.error('uiMaterial.ImmersiveMaterial (dialog) failed: ' + error.code.toString());
+      return undefined;
+    }
   }
 
   /**

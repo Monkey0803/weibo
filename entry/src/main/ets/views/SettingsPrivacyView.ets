@@ -56,7 +56,7 @@ export struct SettingsPrivacyView {
       Scroll(scrollers.settingsPrivacy) {
         Column() {
           Column() {
-            Row().height(CommonConstants.TITLE_BAR_HEIGHT_VP).margin({ bottom: $r('app.float.space_l') })
+            Row().height(safeArea.contentTopInsetVp)
             this.SectionTitle($r('app.string.section_interaction'))
             Column() {
               this.SwitchRow($r('app.media.icon_grip'), $r('app.string.row_grip'), appSettings.gripEnabled,

@@ -10,4 +10,11 @@ export class RouterConstants {
   static readonly PAGE_PROFILE: string = 'profile';
   static readonly PAGE_VIDEO: string = 'video';
   static readonly PAGE_IMAGE_PREVIEW: string = 'imagePreview';
+  static readonly PAGE_HOT_SEARCH: string = 'hotSearch';
+  static readonly PAGE_SOCIAL_LIST: string = 'socialList';
+  static readonly PAGE_REPOST_LIST: string = 'repostList';
+  static readonly PAGE_ENTITY_SEARCH: string = 'entitySearch';
+  static readonly PAGE_COMPOSE: string = 'compose';
+  static readonly PAGE_SETTINGS_APPEARANCE: string = 'settingsAppearance';
+  static readonly PAGE_SETTINGS_PRIVACY: string = 'settingsPrivacy';
 }

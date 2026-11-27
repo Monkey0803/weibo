@@ -19,7 +19,6 @@ import { ThemeColorController } from '../service/ThemeColorController';
 @ComponentV2
 export struct ProfileTabView {
   @Param navPathStack: NavPathStack = new NavPathStack();
-  @Param underTitleBar: boolean = true;
   @Local showBackToTop: boolean = false;
   @Local viewportHeightVp: number = 0;
   @Local mainHeightVp: number = 0;
@@ -80,15 +79,13 @@ export struct ProfileTabView {
     ResponsiveContent() {
       Stack({ alignContent: gripSensor.bottomAlign }) {
         List({ scroller: scrollers.profile }) {
-          ListItem() { Row().height(this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0) }
-          if (this.underTitleBar && authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
+          ListItem() { Row().height(safeArea.contentTopInsetVp) }
+          if (authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
             profileTabViewModel.user.name.length > 0) {
             ListItem() { Row().height($r('app.float.profile_title_stats_height')) }
-              .margin({ bottom: $r('app.float.space_l') })
               .onAreaChange((_oldArea: Area, newArea: Area) => this.statsHeightVp = Number(newArea.height))
-          } else {
-            ListItem() { Row().height($r('app.float.space_l')) }
           }
+          ListItem() { Row().height($r('app.float.space_l')) }
           if (!authViewModel.loggedIn) {
             ListItem() {
               Column({ space: $r('app.float.space_l') }) {
@@ -134,9 +131,9 @@ export struct ProfileTabView {
         .padding({ left: $r('app.float.space_l'), right: $r('app.float.space_l') })
         .contentEndOffset(Math.max(deviceService.wide ? 0 : safeArea.contentBottomInsetVp,
           CommonConstants.shortContentEndOffset(this.viewportHeightVp,
-            (this.underTitleBar ? CommonConstants.TITLE_BAR_HEIGHT_VP : 0) + this.mainHeightVp +
+            safeArea.contentTopInsetVp + this.mainHeightVp +
             (authViewModel.loggedIn ? this.footerHeightVp : 0) +
-            (this.underTitleBar && authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
+            (authViewModel.loggedIn && profileTabViewModel.state === LoadState.READY &&
               profileTabViewModel.user.name.length > 0 ? this.statsHeightVp : 0))))
         .onAreaChange((_oldArea: Area, newArea: Area) => this.viewportHeightVp = Number(newArea.height))
         .scrollBar(BarState.Off)

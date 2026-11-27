@@ -9,6 +9,7 @@ export struct AppIcon {
       .width(this.iconSize)
       .height(this.iconSize)
       .objectFit(ImageFit.Contain)
+      .foregroundColor(this.tint)
       .fillColor(this.tint)
       .accessibilityLevel('no')
   }

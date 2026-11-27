@@ -7,11 +7,13 @@
 
 import {
   ThemeMode,
+  ThemeColor,
   AppLanguage,
   MaterialKind,
   MaterialGrade,
   CardGlowIntensity,
-  CardGlowPalette
+  CardGlowPalette,
+  VideoPlaybackRate
 } from '../common/constants/SettingsConstants';
 
 /** 一个可选项：语义 id + 展示文案。 */
@@ -74,6 +76,15 @@ export const THEME_OPTIONS: ChoiceSet = new ChoiceSet([
   new ChoiceOption(ThemeMode.DARK, $r('app.string.opt_dark'))
 ], ThemeMode.SYSTEM);
 
+/** 应用强调色。 */
+export const THEME_COLOR_OPTIONS: ChoiceSet = new ChoiceSet([
+  new ChoiceOption(ThemeColor.TEAL, $r('app.string.opt_theme_color_teal')),
+  new ChoiceOption(ThemeColor.BLUE, $r('app.string.opt_theme_color_blue')),
+  new ChoiceOption(ThemeColor.PURPLE, $r('app.string.opt_theme_color_purple')),
+  new ChoiceOption(ThemeColor.PINK, $r('app.string.opt_theme_color_pink')),
+  new ChoiceOption(ThemeColor.ORANGE, $r('app.string.opt_theme_color_orange'))
+], ThemeColor.TEAL);
+
 /** 语言：跟随系统 / 简体中文 / 英语。 */
 export const LANGUAGE_OPTIONS: ChoiceSet = new ChoiceSet([
   new ChoiceOption(AppLanguage.SYSTEM, $r('app.string.opt_follow_system')),
@@ -109,3 +120,12 @@ export const CARD_GLOW_PALETTE_OPTIONS: ChoiceSet = new ChoiceSet([
   new ChoiceOption(CardGlowPalette.COOL, $r('app.string.opt_card_glow_cool')),
   new ChoiceOption(CardGlowPalette.WARM, $r('app.string.opt_card_glow_warm'))
 ], CardGlowPalette.THEME);
+
+/** 视频默认播放倍速。1.5 倍速从 API 22 起支持，工程最低兼容 API 为 23。 */
+export const VIDEO_PLAYBACK_RATE_OPTIONS: ChoiceSet = new ChoiceSet([
+  new ChoiceOption(VideoPlaybackRate.RATE_0_75, $r('app.string.opt_video_speed_0_75')),
+  new ChoiceOption(VideoPlaybackRate.RATE_1_00, $r('app.string.opt_video_speed_1_00')),
+  new ChoiceOption(VideoPlaybackRate.RATE_1_25, $r('app.string.opt_video_speed_1_25')),
+  new ChoiceOption(VideoPlaybackRate.RATE_1_50, $r('app.string.opt_video_speed_1_50')),
+  new ChoiceOption(VideoPlaybackRate.RATE_2_00, $r('app.string.opt_video_speed_2_00'))
+], VideoPlaybackRate.RATE_1_00);

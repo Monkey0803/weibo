@@ -7,6 +7,7 @@
  *   - contentTopInsetVp：可滚动内容顶部预留量（= 系统状态栏 + HDS 标题栏高度）；
  *   - contentBottomInsetVp：可滚动内容底部预留量（= 悬浮页签栏避让高度 + 系统导航条高度）；
  *   - bottomInsetVp：系统导航条高度，用于悬浮页签栏上抬 / 页面底部内缩。
+ *   - video*InsetVp：全屏视频控制层避开系统栏与挖孔的四向安全距离。
  * 旋转 / 分屏 / 折叠时由 avoidAreaChange 刷新，不要在页面里缓存避让值。
  *
  * 订阅只由 EntryAbility 持有（attach / detach），页面只读取 @Trace 字段。
@@ -31,6 +32,14 @@ export class SafeAreaController {
   @Trace contentTopInsetVp: number = 0;
   /** 可滚动内容底部预留量（vp）= 悬浮页签栏避让高度 + 系统导航条高度。 */
   @Trace contentBottomInsetVp: number = 0;
+  /** 全屏视频控制层顶部安全距离（系统栏与挖孔取较大值）。 */
+  @Trace videoTopInsetVp: number = 0;
+  /** 全屏视频控制层底部安全距离（导航区与挖孔取较大值）。 */
+  @Trace videoBottomInsetVp: number = 0;
+  /** 全屏视频控制层左侧挖孔安全距离。 */
+  @Trace videoLeftInsetVp: number = 0;
+  /** 全屏视频控制层右侧挖孔安全距离。 */
+  @Trace videoRightInsetVp: number = 0;
 
   private mainWindow: window.Window | undefined = undefined;
   private tabClearanceVp: number = 0;
@@ -48,6 +57,11 @@ export class SafeAreaController {
   /** 纯计算：底部导航避让高度（手势条与三键导航取较大值）。 */
   static navBottom(indicator: number, systemBottom: number): number {
     return Math.max(indicator, systemBottom);
+  }
+
+  /** 纯计算：系统栏和挖孔同时存在时取更安全的一侧距离。 */
+  static videoInset(systemInset: number, cutoutInset: number): number {
+    return Math.max(systemInset, cutoutInset);
   }
 
   /** 绑定主窗口：读一次尺寸，并监听旋转 / 分屏 / 折叠带来的变化。 */
@@ -98,16 +112,19 @@ export class SafeAreaController {
     if (mainWindow === undefined) {
       return;
     }
+    let systemTop: number = 0;
+    let systemBottom: number = 0;
     try {
-      const statusBar: window.AvoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
-      this.topInsetVp = statusBar.visible
-        ? mainWindow.getUIContext().px2vp(statusBar.topRect.height)
-        : 0;
+      const systemArea: window.AvoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+      systemTop = systemArea.visible ? mainWindow.getUIContext().px2vp(systemArea.topRect.height) : 0;
+      systemBottom = systemArea.visible ? mainWindow.getUIContext().px2vp(systemArea.bottomRect.height) : 0;
     } catch (err) {
       const error: BusinessError = err as BusinessError;
       hilog.error(DOMAIN, TAG, 'getWindowAvoidArea(TYPE_SYSTEM) failed: %{public}d', error.code);
-      this.topInsetVp = 0;
+      systemTop = 0;
+      systemBottom = 0;
     }
+    this.topInsetVp = systemTop;
     let indicatorBottom: number = 0;
     try {
       const indicator: window.AvoidArea =
@@ -120,21 +137,29 @@ export class SafeAreaController {
       hilog.error(DOMAIN, TAG, 'getWindowAvoidArea(TYPE_NAVIGATION_INDICATOR) failed: %{public}d', error.code);
       indicatorBottom = 0;
     }
-    let systemBottom: number = 0;
+    let cutoutTop: number = 0;
+    let cutoutBottom: number = 0;
+    let cutoutLeft: number = 0;
+    let cutoutRight: number = 0;
     try {
-      const systemArea: window.AvoidArea =
-        mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
-      systemBottom = systemArea.visible
-        ? mainWindow.getUIContext().px2vp(systemArea.bottomRect.height)
-        : 0;
+      const cutoutArea: window.AvoidArea = mainWindow.getWindowAvoidArea(window.AvoidAreaType.TYPE_CUTOUT);
+      if (cutoutArea.visible) {
+        cutoutTop = mainWindow.getUIContext().px2vp(cutoutArea.topRect.height);
+        cutoutBottom = mainWindow.getUIContext().px2vp(cutoutArea.bottomRect.height);
+        cutoutLeft = mainWindow.getUIContext().px2vp(cutoutArea.leftRect.width);
+        cutoutRight = mainWindow.getUIContext().px2vp(cutoutArea.rightRect.width);
+      }
     } catch (err) {
       const error: BusinessError = err as BusinessError;
-      hilog.error(DOMAIN, TAG, 'getWindowAvoidArea(TYPE_SYSTEM bottom) failed: %{public}d', error.code);
-      systemBottom = 0;
+      hilog.error(DOMAIN, TAG, 'getWindowAvoidArea(TYPE_CUTOUT) failed: %{public}d', error.code);
     }
     this.bottomInsetVp = SafeAreaController.navBottom(indicatorBottom, systemBottom);
     this.contentTopInsetVp = SafeAreaController.contentTop(this.topInsetVp);
     this.contentBottomInsetVp = SafeAreaController.contentBottom(this.tabClearanceVp, this.bottomInsetVp);
+    this.videoTopInsetVp = SafeAreaController.videoInset(systemTop, cutoutTop);
+    this.videoBottomInsetVp = SafeAreaController.videoInset(this.bottomInsetVp, cutoutBottom);
+    this.videoLeftInsetVp = cutoutLeft;
+    this.videoRightInsetVp = cutoutRight;
   }
 }
 

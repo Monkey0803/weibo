@@ -57,6 +57,17 @@ export default function materialMapTest() {
       expect(off === undefined).assertEqual(!usable);
     });
 
+    it('dialog_material_follows_switch_and_device_support', 0, () => {
+      const usable: boolean = MaterialController.materialUsable();
+      const off: uiMaterial.Material | undefined = MaterialController.dialogMaterial(false);
+      const on: uiMaterial.Material | undefined = MaterialController.dialogMaterial(true);
+      expect(off === uiMaterial.Material.empty).assertEqual(usable);
+      expect(on === undefined).assertEqual(!usable);
+      if (usable) {
+        expect(on === MaterialController.dialogMaterial(true)).assertTrue();
+      }
+    });
+
     it('material_state_is_one_of_three_values', 0, () => {
       const state: uiMaterial.MaterialState = MaterialController.materialState();
       const known: boolean = state === uiMaterial.MaterialState.DEFAULT

@@ -7,9 +7,13 @@ export class FeedViewModel {
   @Trace posts: WeiboPost[] = [];
   @Trace state: LoadState = LoadState.IDLE;
   @Trace loadingMore: boolean = false;
+  @Trace refreshing: boolean = false;
   @Trace hasMore: boolean = false;
   @Trace errorMessage: string = '';
   @Trace authRequired: boolean = false;
+  @Trace loadMoreErrorMessage: string = '';
+  @Trace loadMoreAuthRequired: boolean = false;
+  @Trace loadMoreFailed: boolean = false;
   private page: number = 1;
   private cursor: string = '';
   private requestSequence: number = 0;
@@ -28,9 +32,13 @@ export class FeedViewModel {
 
   async refresh(): Promise<void> {
     const sequence: number = ++this.requestSequence;
+    this.refreshing = this.posts.length > 0;
     this.state = LoadState.LOADING;
     this.errorMessage = '';
     this.authRequired = false;
+    this.loadMoreErrorMessage = '';
+    this.loadMoreAuthRequired = false;
+    this.loadMoreFailed = false;
     const result: Result<PageResult<WeiboPost>> = await weiboRepository.feed(this.kind, 1, '');
     if (sequence !== this.requestSequence) {
       return;
@@ -46,6 +54,7 @@ export class FeedViewModel {
       this.authRequired = result.authRequired;
       this.state = LoadState.ERROR;
     }
+    this.refreshing = false;
   }
 
   async loadMore(): Promise<void> {
@@ -53,6 +62,9 @@ export class FeedViewModel {
       return;
     }
     this.loadingMore = true;
+    this.loadMoreErrorMessage = '';
+    this.loadMoreAuthRequired = false;
+    this.loadMoreFailed = false;
     const nextPage: number = this.page + 1;
     const result: Result<PageResult<WeiboPost>> = await weiboRepository.feed(this.kind, nextPage, this.cursor);
     if (result.success && result.data) {
@@ -61,10 +73,25 @@ export class FeedViewModel {
       this.cursor = result.data.nextCursor;
       this.hasMore = result.data.hasMore;
     } else {
-      this.errorMessage = result.message;
-      this.authRequired = result.authRequired;
+      this.loadMoreFailed = true;
+      this.loadMoreErrorMessage = result.message;
+      this.loadMoreAuthRequired = result.authRequired;
     }
     this.loadingMore = false;
+  }
+
+  clearProtected(): void {
+    if (this.kind !== FeedKind.FOLLOWING) {
+      return;
+    }
+    this.posts = [];
+    this.state = LoadState.IDLE;
+    this.hasMore = false;
+    this.page = 1;
+    this.cursor = '';
+    this.errorMessage = '';
+    this.loadMoreErrorMessage = '';
+    this.loadMoreFailed = false;
   }
 
   private merge(current: WeiboPost[], incoming: WeiboPost[]): WeiboPost[] {

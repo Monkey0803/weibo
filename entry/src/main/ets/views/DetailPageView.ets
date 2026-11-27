@@ -1,5 +1,6 @@
-import { CommentLoadMode, LoadState, PostRouteParam, UserRouteParam, WeiboComment,
-  WeiboPost } from '../model/WeiboModels';
+import { CommentLoadMode, LoadState, PostRouteParam, SocialTextEntity,
+  UserRouteParam, WeiboComment,
+  WeiboPost, WeiboUser } from '../model/WeiboModels';
 import { CommentSubmitOutcome, DetailViewModel } from '../viewmodel/DetailViewModel';
 import { authViewModel } from '../viewmodel/AuthViewModel';
 import { RouterConstants } from '../common/constants/RouterConstants';
@@ -12,11 +13,14 @@ import { ThemeColorController } from '../service/ThemeColorController';
 import { appSettings } from '../model/AppSettings';
 import { MaterialKind } from '../common/constants/SettingsConstants';
 import { HdsBarWidthRangeOptions, HdsTabs, HdsTabsFloatingStyle } from '@kit.UIDesignKit';
+import { common } from '@kit.AbilityKit';
 import { ResponsiveContent } from './ResponsiveContent';
 import { WeiboPostCard } from './WeiboPostCard';
 import { MenuItemSpec, MenuSpec } from '../common/components/MenuSpec';
 import { AppMenu } from '../common/components/AppMenu';
 import { contentActionService } from '../service/ContentActionService';
+import { SocialRichText } from '../common/components/SocialRichText';
+import { socialEntityActionService } from '../service/SocialEntityActionService';
 
 const COMMENT_INPUT_ID: string = 'detail-comment-input';
 
@@ -57,6 +61,14 @@ export struct DetailPageView {
     setTimeout((): void => this.focusCommentsAndComposer(), 0);
   }
 
+  private handleVisibleRange(endIndex: number): void {
+    const lastCommentIndex: number = this.viewModel.comments.length + 3;
+    if (!this.viewModel.loadMoreCommentsFailed && this.viewModel.comments.length > 0 &&
+      endIndex >= lastCommentIndex - CommonConstants.AUTO_LOAD_MORE_THRESHOLD) {
+      this.viewModel.loadMoreComments();
+    }
+  }
+
   private async sendComment(): Promise<void> {
     if (!this.canSendComment()) {
       return;
@@ -84,9 +96,17 @@ export struct DetailPageView {
     return this.commentText.trim().length > 0 && !this.viewModel.mutating;
   }
 
-  private openCommentAuthor(comment: WeiboComment): void {
+  private openUser(user: WeiboUser): void {
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_PROFILE,
-      new UserRouteParam(comment.user.id, comment.user.name)));
+      new UserRouteParam(user.id, user.name)));
+  }
+
+  private openEntity(entity: SocialTextEntity): void {
+    socialEntityActionService.open(entity, this.navPathStack, this.hostContext(), this.getUIContext());
+  }
+
+  private hostContext(): common.UIAbilityContext {
+    return this.getUIContext().getHostContext() as common.UIAbilityContext;
   }
 
   private async copyComment(comment: WeiboComment): Promise<void> {
@@ -100,7 +120,7 @@ export struct DetailPageView {
 
   private commentMenuSpec(comment: WeiboComment): MenuSpec {
     return MenuSpec.fromItems([
-      new MenuItemSpec('author', $r('app.string.action_view_author'), () => this.openCommentAuthor(comment)),
+      new MenuItemSpec('author', $r('app.string.action_view_author'), () => this.openUser(comment.user)),
       new MenuItemSpec('copy', $r('app.string.action_copy_text'), () => this.copyComment(comment))
     ]);
   }
@@ -239,16 +259,20 @@ export struct DetailPageView {
         .height($r('app.float.detail_comment_avatar_size'))
         .borderRadius($r('app.float.detail_comment_avatar_size'))
         .objectFit(ImageFit.Cover)
+        .onClick(() => this.openUser(comment.user))
       Column({ space: $r('app.float.space_xs') }) {
         Text(comment.user.name)
           .fontSize($r('app.float.font_size_caption'))
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.hm_text_secondary'))
-        Text(comment.text)
-          .fontSize($r('app.float.font_size_body'))
-          .fontColor($r('app.color.hm_text_primary'))
-          .lineHeight($r('app.float.space_xl'))
-          .width('100%')
+          .onClick(() => this.openUser(comment.user))
+        SocialRichText({
+          text: comment.text,
+          entities: comment.textEntities,
+          brandColor: ThemeColorController.brand(),
+          pressedColor: ThemeColorController.brandPressed(),
+          onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+        })
         Text(comment.createdAt)
           .fontSize($r('app.float.font_size_metric'))
           .fontColor($r('app.color.hm_text_secondary'))
@@ -263,8 +287,16 @@ export struct DetailPageView {
           Column({ space: $r('app.float.space_xs') }) {
             Text(reply.user.name).fontSize($r('app.float.font_size_metric'))
               .fontColor(ThemeColorController.brand())
-            Text(reply.text).fontSize($r('app.float.font_size_caption'))
-              .fontColor($r('app.color.hm_text_primary'))
+              .onClick(() => this.openUser(reply.user))
+            SocialRichText({
+              text: reply.text,
+              entities: reply.textEntities,
+              fontSize: $r('app.float.font_size_caption'),
+              fontColor: $r('app.color.hm_text_primary'),
+              brandColor: ThemeColorController.brand(),
+              pressedColor: ThemeColorController.brandPressed(),
+              onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+            })
           }.width('100%').alignItems(HorizontalAlign.Start).padding($r('app.float.space_s'))
             .backgroundColor($r('app.color.hm_search_background')).borderRadius($r('app.float.radius_small'))
         }, (reply: WeiboComment) => reply.id)
@@ -344,7 +376,7 @@ export struct DetailPageView {
   @Builder
   commentList() {
     List({ scroller: scrollers.detail }) {
-      ListItem() { Row().height(CommonConstants.TITLE_BAR_HEIGHT_VP) }
+      ListItem() { Row().height(safeArea.contentTopInsetVp) }
         .margin({ bottom: $r('app.float.space_l') })
       ListItem() {
         WeiboPostCard({
@@ -390,13 +422,6 @@ export struct DetailPageView {
               .onClick(() => this.viewModel.loadMoreComments())
           }.width('100%').padding($r('app.float.space_m'))
         }
-      } else if (this.viewModel.commentsHasMore) {
-        ListItem() {
-          Button($r('app.string.action_load_more_comments'))
-            .buttonStyle(ButtonStyleMode.TEXTUAL)
-            .width('100%')
-            .onClick(() => this.viewModel.loadMoreComments())
-        }
       }
     }
     .width('100%')
@@ -405,9 +430,12 @@ export struct DetailPageView {
     .contentEndOffset(Math.max(this.composerHeightVp + safeArea.bottomInsetVp,
       this.viewModel.comments.length === 0
         ? CommonConstants.shortContentEndOffset(this.viewportHeightVp,
-          CommonConstants.TITLE_BAR_HEIGHT_VP + this.postHeightVp +
+          safeArea.contentTopInsetVp + this.postHeightVp +
           this.commentsHeaderHeightVp + this.commentsStateHeightVp) : 0))
     .scrollBar(BarState.Off)
+    .onScrollIndex((_startIndex: number, endIndex: number, _centerIndex: number) => {
+      this.handleVisibleRange(endIndex);
+    })
     .onAreaChange((_oldArea: Area, newArea: Area) => {
       this.viewportHeightVp = Number(newArea.height);
       this.handleCommentListReady(Number(newArea.width));

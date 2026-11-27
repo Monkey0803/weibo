@@ -12,6 +12,22 @@ export enum ThemeMode {
   DARK = 'dark'
 }
 
+/** 应用强调色预设。 */
+export enum ThemeColor {
+  TEAL = 'teal',
+  BLUE = 'blue',
+  PURPLE = 'purple',
+  PINK = 'pink',
+  ORANGE = 'orange'
+}
+
+/** 系统图库选择全局背景后的结果。 */
+export enum BackgroundPickOutcome {
+  CANCELLED = 0,
+  APPLIED = 1,
+  FAILED = 2
+}
+
 /** 语言：跟随系统 / 简体中文 / 英语。 */
 export enum AppLanguage {
   SYSTEM = 'system',
@@ -34,16 +50,25 @@ export enum MaterialGrade {
   ADAPTIVE = 'adaptive'
 }
 
-/** 微博卡片径向光晕强度。 */
+/** 微博卡片单色光感阴影强度。 */
 export enum CardGlowIntensity {
   SOFT = 'soft',
   STANDARD = 'standard',
   VIVID = 'vivid'
 }
 
-/** 微博卡片径向光晕配色。 */
+/** 微博卡片单色光感阴影配色。 */
 export enum CardGlowPalette {
   THEME = 'theme',
   COOL = 'cool',
   WARM = 'warm'
+}
+
+/** 视频默认播放倍速。值直接对应 ArkUI Video.currentProgressRate。 */
+export enum VideoPlaybackRate {
+  RATE_0_75 = '0.75',
+  RATE_1_00 = '1.0',
+  RATE_1_25 = '1.25',
+  RATE_1_50 = '1.5',
+  RATE_2_00 = '2.0'
 }

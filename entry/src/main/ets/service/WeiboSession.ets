@@ -75,6 +75,30 @@ export class WeiboSession {
     return '';
   }
 
+  static async storeCsrfCookie(rawToken: string): Promise<void> {
+    if (rawToken.length === 0) {
+      return;
+    }
+    try {
+      webview.WebCookieManager.configCookieSync(WeiboSession.MOBILE_ORIGIN,
+        'XSRF-TOKEN=' + rawToken + '; Path=/; Secure', false);
+      await webview.WebCookieManager.saveCookieAsync();
+    } catch (error) {
+      hilog.warn(DOMAIN, TAG, 'csrf cookie persistence failed');
+    }
+  }
+
+  static async clear(): Promise<boolean> {
+    try {
+      await webview.WebCookieManager.clearAllCookies();
+      await webview.WebCookieManager.saveCookieAsync();
+      return true;
+    } catch (error) {
+      hilog.error(DOMAIN, TAG, 'cookie clear failed');
+      return false;
+    }
+  }
+
   private static safeHost(url: string): string {
     const schemeIndex: number = url.indexOf('://');
     const hostStart: number = schemeIndex >= 0 ? schemeIndex + 3 : 0;

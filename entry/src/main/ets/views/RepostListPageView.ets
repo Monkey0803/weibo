@@ -1,6 +1,7 @@
 import { LoadState, RepostListRouteParam, WeiboPost } from '../model/WeiboModels';
 import { RepostListViewModel } from '../viewmodel/RepostListViewModel';
 import { scrollers } from '../service/ScrollerRegistry';
+import { safeArea } from '../service/SafeAreaController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { WeiboPostCard } from './WeiboPostCard';
 
@@ -18,7 +19,7 @@ export struct RepostListPageView {
 
   build() {
     List({ scroller: scrollers.repostList }) {
-      ListItem() { Row().height(CommonConstants.TITLE_BAR_HEIGHT_VP) }
+      ListItem() { Row().height(safeArea.contentTopInsetVp) }
         .margin({ bottom: $r('app.float.space_l') })
       if (this.viewModel.state === LoadState.LOADING) {
         ListItem() { LoadingProgress().width('100%').margin($r('app.float.space_xl')) }
@@ -43,7 +44,7 @@ export struct RepostListPageView {
     }.width('100%').height('100%').padding({ left: $r('app.float.space_l'), right: $r('app.float.space_l') })
       .contentEndOffset(this.viewModel.posts.length <= 1
         ? CommonConstants.shortContentEndOffset(this.viewportHeightVp,
-          CommonConstants.TITLE_BAR_HEIGHT_VP + (this.viewModel.posts.length === 1
+          safeArea.contentTopInsetVp + (this.viewModel.posts.length === 1
             ? this.singlePostHeightVp : CommonConstants.shortContentScrollDistance(this.viewportHeightVp))) : 0)
       .onAreaChange((_oldArea: Area, newArea: Area) => this.viewportHeightVp = Number(newArea.height))
       .scrollBar(BarState.Off)

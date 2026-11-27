@@ -1,31 +1,74 @@
 import {
+  ApiFailureKind,
   ImagePreviewRouteParam,
   PostRouteParam,
+  RepostListRouteParam,
+  Result,
+  SocialTextEntity,
   UserRouteParam,
-  VideoRouteParam,
+  WeiboMediaKind,
   WeiboPost
 } from '../model/WeiboModels';
 import { RouterConstants } from '../common/constants/RouterConstants';
 import { CardGlowIntensity, CardGlowPalette } from '../common/constants/SettingsConstants';
 import { appSettings } from '../model/AppSettings';
+import { authViewModel } from '../viewmodel/AuthViewModel';
+import { postInteractionViewModel } from '../viewmodel/PostInteractionViewModel';
+import { notificationService } from '../service/NotificationService';
+import { MaterialController } from '../service/MaterialController';
+import { ThemeColorController } from '../service/ThemeColorController';
+import { PostDateDisplay, PostDateFormatter, PostDateKind } from '../service/PostDateFormatter';
 import { WeiboMediaGrid } from './WeiboMediaGrid';
 import { WeiboMediaTile } from './WeiboMediaTile';
+import { WeiboLiveCard } from './WeiboLiveCard';
+import { common } from '@kit.AbilityKit';
+import { MenuItemSpec, MenuSpec } from '../common/components/MenuSpec';
+import { AppMenu } from '../common/components/AppMenu';
+import { AppVideoPlayer } from '../common/components/AppVideoPlayer';
+import { contentActionService } from '../service/ContentActionService';
+import { SocialRichText } from '../common/components/SocialRichText';
+import { socialEntityActionService } from '../service/SocialEntityActionService';
+import { SocialEntityInteractionGuard } from '../service/SocialEntityInteractionGuard';
 
 @ComponentV2
 export struct WeiboPostCard {
   @Param post: WeiboPost = new WeiboPost();
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Param expanded: boolean = false;
-  @Param useAppGlowSettings: boolean = true;
-  @Param customGlowEnabled: boolean = true;
-  @Param customGlowBaseColor: ResourceColor = $r('app.color.hm_card_background');
-  @Param customGlowColor: ResourceColor = $r('app.color.hm_card_glow_theme');
-  @Param customGlowRadius: Length = $r('app.float.card_glow_radius_soft');
-  @Param customGlowCenterX: Length = $r('app.float.card_glow_center_x');
-  @Param customGlowCenterY: Length = $r('app.float.card_glow_center_y');
+  @Param showMetrics: boolean = true;
+  @Event onCommentRequested: () => void = (): void => {};
+  @Local repostEditorVisible: boolean = false;
+  @Local repostText: string = '';
+  private suppressNextCardClick: boolean = false;
+  private entityInteractionGuard: SocialEntityInteractionGuard = new SocialEntityInteractionGuard();
 
-  private openPost(): void {
-    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_DETAIL, new PostRouteParam(this.post)));
+  aboutToAppear(): void {
+    postInteractionViewModel.remember(this.post);
+  }
+
+  private openPost(focusComments: boolean = false): void {
+    if (this.suppressNextCardClick || this.entityInteractionGuard.blocked()) {
+      return;
+    }
+    if (this.expanded) {
+      if (focusComments) {
+        this.onCommentRequested();
+      }
+      return;
+    }
+    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_DETAIL,
+      new PostRouteParam(this.post, focusComments)));
+  }
+
+  private openRepost(): void {
+    if (this.suppressNextCardClick || this.entityInteractionGuard.blocked()) {
+      return;
+    }
+    const repost: WeiboPost | undefined = this.post.repost;
+    if (repost === undefined || repost.id.length === 0) {
+      return;
+    }
+    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_DETAIL, new PostRouteParam(repost)));
   }
 
   private openUser(): void {
@@ -33,9 +76,25 @@ export struct WeiboPostCard {
       new UserRouteParam(this.post.user.id, this.post.user.name)));
   }
 
-  private openVideo(): void {
-    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_VIDEO,
-      new VideoRouteParam(this.post.media.videoUrl, this.post.media.videoPosterUrl)));
+  private openEntity(entity: SocialTextEntity): void {
+    if (!this.entityInteractionGuard.blocked()) {
+      this.entityInteractionGuard.begin();
+    }
+    this.entityInteractionGuard.end();
+    socialEntityActionService.open(entity, this.navPathStack, this.hostContext(), this.getUIContext());
+  }
+
+  private handleEntityTouch(active: boolean): void {
+    if (active) {
+      this.entityInteractionGuard.begin();
+    } else {
+      this.entityInteractionGuard.end();
+    }
+  }
+
+  private openReposts(): void {
+    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_REPOST_LIST,
+      new RepostListRouteParam(this.post.id)));
   }
 
   private openImage(imageIndex: number): void {
@@ -43,41 +102,80 @@ export struct WeiboPostCard {
       new ImagePreviewRouteParam(this.post.media.imageUrls, imageIndex)));
   }
 
-  private glowEnabled(): boolean {
-    return this.useAppGlowSettings ? appSettings.cardGlowEnabled : this.customGlowEnabled;
+  private async openLive(): Promise<void> {
+    this.suppressNextCardClick = true;
+    setTimeout((): void => {
+      this.suppressNextCardClick = false;
+    }, 0);
+    if (!await contentActionService.openLink(this.hostContext(), contentActionService.liveUrl(this.post))) {
+      notificationService.showError(this.getUIContext(), $r('app.string.notice_open_failed'));
+    }
+  }
+
+  private hostContext(): common.UIAbilityContext {
+    return this.getUIContext().getHostContext() as common.UIAbilityContext;
+  }
+
+  private notifyCopy(success: boolean): void {
+    if (success) {
+      notificationService.showSuccess(this.getUIContext(), $r('app.string.notice_copied'));
+    } else {
+      notificationService.showError(this.getUIContext(), $r('app.string.notice_copy_failed'));
+    }
+  }
+
+  private async copyPostText(): Promise<void> {
+    this.notifyCopy(await contentActionService.copy(this.post.text));
+  }
+
+  private async copyPostLink(): Promise<void> {
+    this.notifyCopy(await contentActionService.copy(contentActionService.postUrl(this.post)));
+  }
+
+  private async sharePost(): Promise<void> {
+    const success: boolean = await contentActionService.shareText(this.hostContext(), this.post.user.name,
+      contentActionService.postShareText(this.post));
+    if (!success) {
+      notificationService.showError(this.getUIContext(), $r('app.string.notice_share_failed'));
+    }
+  }
+
+  private postMenuSpec(): MenuSpec {
+    const items: MenuItemSpec[] = [];
+    if (!this.expanded) {
+      items.push(new MenuItemSpec('detail', $r('app.string.action_view_detail'), () => this.openPost()));
+    }
+    items.push(new MenuItemSpec('author', $r('app.string.action_view_author'), () => this.openUser()));
+    items.push(new MenuItemSpec('copy-text', $r('app.string.action_copy_text'), () => this.copyPostText()));
+    items.push(new MenuItemSpec('copy-link', $r('app.string.action_copy_link'), () => this.copyPostLink())
+      .withEnabled(contentActionService.postUrl(this.post).length > 0));
+    items.push(new MenuItemSpec('share', $r('app.string.action_share'), () => this.sharePost()));
+    if (authViewModel.loggedIn) {
+      items.push(new MenuItemSpec('favorite', postInteractionViewModel.favorited(this.post) ?
+        $r('app.string.action_unfavorite') : $r('app.string.action_favorite'), () => this.toggleFavorite()));
+    }
+    if (authViewModel.userId.length > 0 && authViewModel.userId === this.post.user.id) {
+      items.push(new MenuItemSpec('delete', $r('app.string.action_delete_post'), () => this.confirmDelete()));
+    }
+    return MenuSpec.fromItems(items);
+  }
+
+  @Builder
+  PostMenu() {
+    AppMenu(this.postMenuSpec());
   }
 
   private glowColor(): ResourceColor {
-    if (!this.useAppGlowSettings) {
-      return this.customGlowColor;
-    }
     if (appSettings.cardGlowPalette === CardGlowPalette.COOL) {
       return $r('app.color.hm_card_glow_cool');
     }
     if (appSettings.cardGlowPalette === CardGlowPalette.WARM) {
       return $r('app.color.hm_card_glow_warm');
     }
-    return $r('app.color.hm_card_glow_theme');
+    return ThemeColorController.glow();
   }
 
-  private glowPaintColor(): ResourceColor {
-    if (this.glowEnabled()) {
-      return this.glowColor();
-    }
-    return Color.Transparent;
-  }
-
-  private glowBaseColor(): ResourceColor {
-    if (this.useAppGlowSettings) {
-      return $r('app.color.hm_card_background');
-    }
-    return this.customGlowBaseColor;
-  }
-
-  private glowRadius(): Length {
-    if (!this.useAppGlowSettings) {
-      return this.customGlowRadius;
-    }
+  private glowRadius(): Resource {
     if (appSettings.cardGlowIntensity === CardGlowIntensity.VIVID) {
       return $r('app.float.card_glow_radius_vivid');
     }
@@ -87,12 +185,128 @@ export struct WeiboPostCard {
     return $r('app.float.card_glow_radius_soft');
   }
 
-  private glowCenterX(): Length {
-    return this.useAppGlowSettings ? $r('app.float.card_glow_center_x') : this.customGlowCenterX;
+  private createdAtText(): ResourceStr {
+    const display: PostDateDisplay = this.expanded ? PostDateFormatter.full(this.post.createdAt) :
+      PostDateFormatter.friendly(this.post.createdAt);
+    if (display.kind === PostDateKind.JUST_NOW) {
+      return $r('app.string.post_date_just_now');
+    }
+    if (display.kind === PostDateKind.MINUTES_AGO) {
+      return $r('app.string.post_date_minutes_ago', display.first);
+    }
+    if (display.kind === PostDateKind.HOURS_AGO) {
+      return $r('app.string.post_date_hours_ago', display.first);
+    }
+    if (display.kind === PostDateKind.YESTERDAY) {
+      return $r('app.string.post_date_yesterday');
+    }
+    if (display.kind === PostDateKind.MONTH_DAY) {
+      return $r('app.string.post_date_month_day', display.first, display.second);
+    }
+    if (display.kind === PostDateKind.YEAR_MONTH_DAY) {
+      return $r('app.string.post_date_year_month_day', display.first, display.second, display.third);
+    }
+    if (display.kind === PostDateKind.FULL) {
+      return $r('app.string.post_date_full', display.first, display.second, display.third,
+        display.fourth, display.fifth);
+    }
+    return display.raw;
   }
 
-  private glowCenterY(): Length {
-    return this.useAppGlowSettings ? $r('app.float.card_glow_center_y') : this.customGlowCenterY;
+  private repostMenu(): MenuElement[] {
+    const immediate: MenuElement = {
+      value: $r('app.string.action_repost_now'),
+      action: () => this.submitRepost('')
+    };
+    const edit: MenuElement = {
+      value: $r('app.string.action_repost_edit'),
+      action: () => this.repostEditorVisible = true
+    };
+    const list: MenuElement = {
+      value: $r('app.string.action_view_reposts'),
+      action: () => this.openReposts()
+    };
+    return [immediate, edit, list];
+  }
+
+  private requireLogin(): boolean {
+    if (authViewModel.loggedIn) {
+      return true;
+    }
+    this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_LOGIN, ''));
+    return false;
+  }
+
+  private async toggleLike(): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
+    const result: Result<boolean> = await postInteractionViewModel.toggleLike(this.post);
+    if (!result.success) {
+      if (result.authRequired) {
+        notificationService.showError(this.getUIContext(), $r('app.string.error_login_expired'));
+      } else if (result.failureKind === ApiFailureKind.NETWORK) {
+        notificationService.showError(this.getUIContext(), $r('app.string.mutation_result_unknown'));
+      } else if (result.message.length > 0) {
+        notificationService.showError(this.getUIContext(), result.message);
+      } else {
+        notificationService.showError(this.getUIContext(), $r('app.string.mutation_failed'));
+      }
+    }
+  }
+
+  private async submitRepost(content: string): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
+    if (await postInteractionViewModel.repost(this.post, content)) {
+      this.repostText = '';
+      this.repostEditorVisible = false;
+      notificationService.showSuccess(this.getUIContext(), $r('app.string.repost_sent'));
+    } else {
+      notificationService.showError(this.getUIContext(), $r('app.string.mutation_failed'));
+    }
+  }
+
+  private async toggleFavorite(): Promise<void> {
+    if (!this.requireLogin()) {
+      return;
+    }
+    const result: Result<boolean> = await postInteractionViewModel.toggleFavorite(this.post);
+    if (result.success) {
+      notificationService.showSuccess(this.getUIContext(), postInteractionViewModel.favorited(this.post) ?
+        $r('app.string.favorite_success') : $r('app.string.unfavorite_success'));
+    } else {
+      notificationService.showError(this.getUIContext(), $r('app.string.mutation_failed'));
+    }
+  }
+
+  private confirmDelete(): void {
+    this.getUIContext().showAlertDialog({
+      title: $r('app.string.delete_post_title'),
+      message: $r('app.string.delete_post_message'),
+      primaryButton: { value: $r('app.string.action_cancel'), action: () => {} },
+      secondaryButton: { value: $r('app.string.action_delete_post'), action: () => { this.deletePost(); } }
+    });
+  }
+
+  private async deletePost(): Promise<void> {
+    const result: Result<boolean> = await postInteractionViewModel.deletePost(this.post);
+    if (result.success) {
+      notificationService.showSuccess(this.getUIContext(), $r('app.string.delete_post_success'));
+    } else {
+      notificationService.showError(this.getUIContext(), $r('app.string.mutation_failed'));
+    }
+  }
+
+  private canSendEditedRepost(): boolean {
+    return this.repostText.trim().length > 0 && !postInteractionViewModel.pending(this.post.id);
+  }
+
+  private submitEditedRepost(): void {
+    if (this.canSendEditedRepost()) {
+      this.submitRepost(this.repostText);
+    }
   }
 
   @Builder
@@ -111,7 +325,7 @@ export struct WeiboPostCard {
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Row({ space: $r('app.float.space_s') }) {
-          Text(this.post.createdAt)
+          Text(this.createdAtText())
             .fontSize($r('app.float.font_size_caption'))
             .fontColor($r('app.color.hm_text_secondary'))
             .maxLines(1)
@@ -126,6 +340,21 @@ export struct WeiboPostCard {
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
+      Button() {
+        SymbolGlyph($r('sys.symbol.ellipsis_circle'))
+          .fontSize($r('app.float.icon_size_small'))
+          .fontColor([$r('app.color.hm_text_secondary')])
+      }
+      .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .width($r('app.float.button_height'))
+      .height($r('app.float.button_height'))
+      .accessibilityText($r('app.string.action_more'))
+      .bindMenu(this.PostMenu(), MaterialController.menuOptions(appSettings.immersiveOn))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
     }
     .width('100%')
     .onTouch((event: TouchEvent) => {
@@ -138,36 +367,13 @@ export struct WeiboPostCard {
 
   @Builder
   videoContent() {
-    Stack({ alignContent: Alignment.Center }) {
-      if (this.post.media.videoPosterUrl.length > 0) {
-        Image(this.post.media.videoPosterUrl)
-          .width('100%')
-          .height($r('app.float.media_single_height'))
-          .objectFit(ImageFit.Cover)
-      } else {
-        Column()
-          .width('100%')
-          .height($r('app.float.media_single_height'))
-          .backgroundColor($r('app.color.hm_media_placeholder'))
-      }
-      Button() {
-        SymbolGlyph($r('sys.symbol.play_round_rectangle_fill'))
-          .fontSize($r('app.float.hero_icon_size'))
-          .fontColor([$r('sys.color.white')])
-      }
-      .buttonStyle(ButtonStyleMode.TEXTUAL)
-      .backgroundColor($r('app.color.hm_scrim'))
-      .accessibilityText($r('app.string.action_play_video'))
-      .onClick(() => this.openVideo())
-    }
-    .width('100%')
-    .height($r('app.float.media_single_height'))
-    .clip(true)
-    .borderRadius($r('app.float.radius_small'))
-    .onTouch((event: TouchEvent) => {
-      if (event.type === TouchType.Up) {
-        event.stopPropagation();
-      }
+    AppVideoPlayer({
+      videoUrl: this.post.media.videoUrl,
+      posterUrl: this.post.media.videoPosterUrl,
+      playerHeight: $r('app.float.media_single_height'),
+      playerRadius: $r('app.float.radius_small'),
+      coordinateInlinePlayback: true,
+      pauseWhenHidden: true
     })
   }
 
@@ -218,7 +424,14 @@ export struct WeiboPostCard {
 
   @Builder
   mediaContent() {
-    if (this.post.media.videoUrl.length > 0) {
+    if (this.post.media.kind === WeiboMediaKind.LIVE) {
+      WeiboLiveCard({
+        posterUrl: this.post.media.videoPosterUrl,
+        title: this.post.media.pageTitle,
+        state: this.post.media.liveState,
+        onOpen: () => this.openLive()
+      })
+    } else if (this.post.media.videoUrl.length > 0) {
       this.videoContent()
     } else if (this.post.media.imageUrls.length > 0) {
       this.imageContent()
@@ -232,28 +445,43 @@ export struct WeiboPostCard {
         Text($r('app.string.post_repost_author', this.post.repost.user.name))
           .fontSize($r('app.float.font_size_caption'))
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.hm_brand'))
+          .fontColor(ThemeColorController.brand())
           .width('100%')
         if (this.expanded) {
-          Text(this.post.repost.text)
-            .fontSize($r('app.float.font_size_caption'))
-            .fontColor($r('app.color.hm_text_secondary'))
-            .maxLines(8)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .width('100%')
+          SocialRichText({
+            text: this.post.repost.text,
+            entities: this.post.repost.textEntities,
+            fontSize: $r('app.float.font_size_caption'),
+            fontColor: $r('app.color.hm_text_secondary'),
+            brandColor: ThemeColorController.brand(),
+            pressedColor: ThemeColorController.brandPressed(),
+            onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
+            onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+          })
         } else {
-          Text(this.post.repost.text)
-            .fontSize($r('app.float.font_size_caption'))
-            .fontColor($r('app.color.hm_text_secondary'))
-            .maxLines(3)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .width('100%')
+          SocialRichText({
+            text: this.post.repost.text,
+            entities: this.post.repost.textEntities,
+            fontSize: $r('app.float.font_size_caption'),
+            fontColor: $r('app.color.hm_text_secondary'),
+            maxLines: 3,
+            brandColor: ThemeColorController.brand(),
+            pressedColor: ThemeColorController.brandPressed(),
+            onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
+            onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+          })
         }
       }
       .width('100%')
       .padding($r('app.float.space_m'))
-      .backgroundColor($r('app.color.hm_brand_soft'))
+      .backgroundColor(ThemeColorController.soft())
       .borderRadius($r('app.float.radius_small'))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
+      .onClick(() => this.openRepost())
     }
   }
 
@@ -263,10 +491,10 @@ export struct WeiboPostCard {
       if (active) {
         SymbolGlyph(symbol)
           .fontSize($r('app.float.icon_size_small'))
-          .fontColor([$r('app.color.hm_brand')])
+          .fontColor([ThemeColorController.brand()])
         Text(label)
           .fontSize($r('app.float.font_size_metric'))
-          .fontColor($r('app.color.hm_brand'))
+          .fontColor(ThemeColorController.brand())
       } else {
         SymbolGlyph(symbol)
           .fontSize($r('app.float.icon_size_small'))
@@ -279,15 +507,123 @@ export struct WeiboPostCard {
   }
 
   @Builder
+  repostEditor() {
+    if (this.repostEditorVisible) {
+      Column({ space: $r('app.float.space_s') }) {
+        Stack({ alignContent: Alignment.TopEnd }) {
+          TextArea({ text: this.repostText, placeholder: $r('app.string.repost_hint') })
+            .onChange((value: string) => this.repostText = value)
+            .maxLines(4, { overflowMode: MaxLinesMode.SCROLL })
+            .padding({ right: $r('app.float.button_height') })
+            .width('100%')
+            .backgroundColor($r('app.color.hm_search_background'))
+            .borderRadius($r('app.float.radius_small'))
+          if (this.repostText.length > 0) {
+            Button() {
+              SymbolGlyph($r('sys.symbol.xmark_circle_fill'))
+                .fontSize($r('app.float.icon_size_small'))
+                .fontColor([$r('app.color.hm_text_secondary')])
+            }
+            .buttonStyle(ButtonStyleMode.TEXTUAL)
+            .backgroundColor(Color.Transparent)
+            .width($r('app.float.button_height'))
+            .height($r('app.float.button_height'))
+            .accessibilityText($r('app.string.action_clear_repost'))
+            .onClick(() => this.repostText = '')
+          }
+        }
+        .width('100%')
+        Row({ space: $r('app.float.space_s') }) {
+          Blank()
+          Button() {
+            SymbolGlyph($r('sys.symbol.xmark'))
+              .fontSize($r('app.float.icon_size_small'))
+              .fontColor([$r('app.color.hm_text_secondary')])
+          }
+            .buttonStyle(ButtonStyleMode.TEXTUAL)
+            .backgroundColor(Color.Transparent)
+            .width($r('app.float.button_height'))
+            .height($r('app.float.button_height'))
+            .accessibilityText($r('app.string.action_cancel'))
+            .onClick(() => {
+              this.repostEditorVisible = false;
+              this.repostText = '';
+            })
+          Button() {
+            SymbolGlyph($r('sys.symbol.paperplane_fill'))
+              .fontSize($r('app.float.icon_size_small'))
+              .fontColor([this.canSendEditedRepost()
+                ? ThemeColorController.brand() : $r('app.color.hm_text_secondary')])
+          }
+            .buttonStyle(ButtonStyleMode.TEXTUAL)
+            .backgroundColor(Color.Transparent)
+            .width($r('app.float.button_height'))
+            .height($r('app.float.button_height'))
+            .enabled(this.canSendEditedRepost())
+            .accessibilityText($r('app.string.action_repost_send'))
+            .onClick(() => this.submitEditedRepost())
+        }
+        .width('100%')
+      }
+      .width('100%')
+      .padding($r('app.float.space_m'))
+      .backgroundColor($r('app.color.hm_card_background'))
+      .borderRadius($r('app.float.radius_small'))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
+    }
+  }
+
+  @Builder
   metrics() {
     Row() {
-      this.metricItem($r('sys.symbol.repeat'), $r('app.string.post_reposts', this.post.repostsCount), false)
-      this.metricItem($r('sys.symbol.ellipsis_bubble'), $r('app.string.post_comments', this.post.commentsCount), false)
-      if (this.post.liked) {
-        this.metricItem($r('sys.symbol.heart_fill'), $r('app.string.post_likes', this.post.likesCount), true)
-      } else {
-        this.metricItem($r('sys.symbol.heart'), $r('app.string.post_likes', this.post.likesCount), false)
+      Button() {
+        this.metricItem($r('sys.symbol.repeat'),
+          $r('app.string.post_reposts', postInteractionViewModel.repostsCount(this.post)), false)
       }
+      .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .enabled(!postInteractionViewModel.pending(this.post.id))
+      .accessibilityText($r('app.string.action_repost'))
+      .bindMenu(this.repostMenu(), MaterialController.menuOptions(appSettings.immersiveOn))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
+      Button() {
+        this.metricItem($r('sys.symbol.ellipsis_bubble'),
+          $r('app.string.post_comments', this.post.commentsCount), false)
+      }
+      .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .accessibilityText($r('app.string.post_comments', this.post.commentsCount))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
+      .onClick(() => this.openPost(true))
+      Button() {
+        if (postInteractionViewModel.liked(this.post)) {
+          this.metricItem($r('sys.symbol.heart_fill'),
+            $r('app.string.post_likes', postInteractionViewModel.likesCount(this.post)), true)
+        } else {
+          this.metricItem($r('sys.symbol.heart'),
+            $r('app.string.post_likes', postInteractionViewModel.likesCount(this.post)), false)
+        }
+      }
+      .buttonStyle(ButtonStyleMode.TEXTUAL)
+      .enabled(!postInteractionViewModel.pending(this.post.id))
+      .accessibilityText(postInteractionViewModel.liked(this.post)
+        ? $r('app.string.action_unlike') : $r('app.string.action_like'))
+      .onTouch((event: TouchEvent) => {
+        if (event.type === TouchType.Up) {
+          event.stopPropagation();
+        }
+      })
+      .onClick(() => this.toggleLike())
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceBetween)
@@ -296,51 +632,69 @@ export struct WeiboPostCard {
   @Builder
   bodyText() {
     if (this.expanded) {
-      Text(this.post.text)
-        .fontSize($r('app.float.font_size_body'))
-        .fontColor($r('app.color.hm_text_primary'))
-        .lineHeight($r('app.float.space_xl'))
-        .width('100%')
+      SocialRichText({
+        text: this.post.text,
+        entities: this.post.textEntities,
+        brandColor: ThemeColorController.brand(),
+        pressedColor: ThemeColorController.brandPressed(),
+        onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
+        onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+      })
     } else {
-      Text(this.post.text)
-        .fontSize($r('app.float.font_size_body'))
-        .fontColor($r('app.color.hm_text_primary'))
-        .lineHeight($r('app.float.space_xl'))
-        .maxLines(4)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .width('100%')
-      if (this.post.text.length > 120) {
+      SocialRichText({
+        text: this.post.text,
+        entities: this.post.textEntities,
+        maxLines: 4,
+        brandColor: ThemeColorController.brand(),
+        pressedColor: ThemeColorController.brandPressed(),
+        onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
+        onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+      })
+      if (this.post.isLongText || this.post.text.length > 120) {
         Text($r('app.string.post_read_more'))
           .fontSize($r('app.float.font_size_caption'))
-          .fontColor($r('app.color.hm_brand'))
+          .fontColor(ThemeColorController.brand())
       }
     }
   }
 
   build() {
-    Stack() {
+    if (!postInteractionViewModel.deleted(this.post)) {
+      Stack() {
       Column({ space: $r('app.float.space_m') }) {
         this.userHeader()
         this.bodyText()
         this.mediaContent()
         this.repostContent()
-        Divider().color($r('app.color.hm_divider'))
-        this.metrics()
+        this.repostEditor()
+        if (this.expanded && this.post.fullTextUnavailable) {
+          Text($r('app.string.post_full_text_unavailable'))
+            .fontSize($r('app.float.font_size_caption'))
+            .fontColor($r('app.color.hm_error'))
+            .width('100%')
+        }
+        if (this.showMetrics) {
+          Divider().color($r('app.color.hm_divider'))
+          this.metrics()
+        }
       }
       .width('100%')
       .padding($r('app.float.space_l'))
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .backgroundColor(this.glowBaseColor())
-    .radialGradient({
-      center: [this.glowCenterX(), this.glowCenterY()],
-      radius: this.glowRadius(),
-      colors: [[this.glowPaintColor(), 0.0], [Color.Transparent, 1.0]],
-      repeating: false
+    .backgroundColor(appSettings.cardGlowEnabled
+      ? $r('app.color.hm_card_glass') : $r('app.color.hm_card_background'))
+    .backdropBlur(appSettings.cardGlowEnabled ? BlurStyle.COMPONENT_ULTRA_THIN : 0)
+    .shadow({
+      radius: appSettings.cardGlowEnabled ? this.glowRadius() : 0,
+      color: appSettings.cardGlowEnabled ? this.glowColor() : Color.Transparent,
+      offsetX: 0,
+      offsetY: $r('app.float.card_glow_shadow_offset')
     })
     .borderRadius($r('app.float.radius_card'))
-    .clip(true)
-    .onClick(() => this.openPost())
+    .bindContextMenu(this.PostMenu(), ResponseType.LongPress)
+      .onClick(() => this.openPost())
+    }
   }
 }
