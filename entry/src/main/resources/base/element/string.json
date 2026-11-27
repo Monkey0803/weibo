@@ -331,6 +331,8 @@
     { "name": "action_pause_video", "value": "Pause video" },
     { "name": "action_enter_fullscreen", "value": "Enter full screen" },
     { "name": "action_exit_fullscreen", "value": "Exit full screen" },
+    { "name": "action_force_landscape", "value": "Force landscape" },
+    { "name": "action_force_portrait", "value": "Force portrait" },
     { "name": "loading", "value": "Loading…" },
     { "name": "loading_more", "value": "Loading more…" },
     { "name": "empty_feed", "value": "No posts yet" },

@@ -19,6 +19,20 @@ export enum CommentSubmitOutcome {
   FAILED = 3
 }
 
+/** 微博分页接口会把“游标已耗尽”包装成 API_REJECTED；这是正常结束，不应展示错误。 */
+export function isCommentPageExhausted(result: Result<CommentPageResult>): boolean {
+  if (result.failureKind !== ApiFailureKind.API_REJECTED || result.authRequired || result.statusCode >= 400) {
+    return false;
+  }
+  const message: string = result.message.trim().toLowerCase().replace(/[。.!！]+$/, '');
+  return ['暂无数据', '没有数据', '暂无更多数据', '没有更多数据', '暂无更多评论', '没有更多评论',
+    '已全部加载', 'no data', 'no more data', 'no more comments'].includes(message);
+}
+
+export function commentsStateAfterExhaustion(commentCount: number): LoadState {
+  return commentCount > 0 ? LoadState.READY : LoadState.EMPTY;
+}
+
 export function prepareDetailFallback(initial: WeiboPost): WeiboPost {
   if (initial.isLongText) {
     initial.fullTextUnavailable = true;
@@ -137,6 +151,10 @@ export class DetailViewModel {
       this.commentsHasMore = result.data.hasMore;
       this.commentLoadMode = result.data.mode;
       this.commentsState = this.comments.length > 0 ? LoadState.READY : LoadState.EMPTY;
+    } else if (isCommentPageExhausted(result)) {
+      this.cursor = '';
+      this.commentsHasMore = false;
+      this.commentsState = commentsStateAfterExhaustion(this.comments.length);
     } else {
       this.errorMessage = result.message;
       this.commentsState = LoadState.ERROR;
@@ -158,6 +176,9 @@ export class DetailViewModel {
       this.cursor = result.data.nextCursor;
       this.commentsHasMore = result.data.hasMore;
       this.commentLoadMode = result.data.mode;
+    } else if (isCommentPageExhausted(result)) {
+      this.cursor = '';
+      this.commentsHasMore = false;
     } else {
       this.loadMoreCommentsFailed = true;
       this.loadMoreCommentsError = result.message;

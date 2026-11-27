@@ -1,6 +1,19 @@
 import { describe, it, expect } from '@ohos/hypium';
-import { WeiboLiveState, WeiboMediaKind, WeiboPost } from '../../../main/ets/model/WeiboModels';
-import { mergePostDetail, prepareDetailFallback } from '../../../main/ets/viewmodel/DetailViewModel';
+import {
+  ApiFailureKind,
+  CommentPageResult,
+  LoadState,
+  Result,
+  WeiboLiveState,
+  WeiboMediaKind,
+  WeiboPost
+} from '../../../main/ets/model/WeiboModels';
+import {
+  commentsStateAfterExhaustion,
+  isCommentPageExhausted,
+  mergePostDetail,
+  prepareDetailFallback
+} from '../../../main/ets/viewmodel/DetailViewModel';
 
 export default function detailViewModelTest() {
   describe('DetailViewModel', () => {
@@ -38,6 +51,29 @@ export default function detailViewModelTest() {
       const detail: WeiboPost = new WeiboPost();
       detail.text = 'Full text';
       expect(mergePostDetail(detail, initial).fullTextUnavailable).assertFalse();
+    });
+
+    it('treats_no_data_from_comment_pagination_as_normal_completion', 0, () => {
+      const noData: Result<CommentPageResult> = Result.fail<CommentPageResult>(
+        '暂无数据', false, ApiFailureKind.API_REJECTED);
+      expect(isCommentPageExhausted(noData)).assertTrue();
+      expect(commentsStateAfterExhaustion(1)).assertEqual(LoadState.READY);
+      expect(commentsStateAfterExhaustion(0)).assertEqual(LoadState.EMPTY);
+    });
+
+    it('keeps_real_comment_failures_visible', 0, () => {
+      const network: Result<CommentPageResult> = Result.fail<CommentPageResult>(
+        '暂无数据', false, ApiFailureKind.NETWORK);
+      const rejected: Result<CommentPageResult> = Result.fail<CommentPageResult>(
+        '请求过于频繁', false, ApiFailureKind.API_REJECTED);
+      const permission: Result<CommentPageResult> = Result.fail<CommentPageResult>(
+        '没有数据访问权限', false, ApiFailureKind.API_REJECTED);
+      const forbidden: Result<CommentPageResult> = Result.fail<CommentPageResult>(
+        '暂无数据', true, ApiFailureKind.API_REJECTED, 403);
+      expect(isCommentPageExhausted(network)).assertFalse();
+      expect(isCommentPageExhausted(rejected)).assertFalse();
+      expect(isCommentPageExhausted(permission)).assertFalse();
+      expect(isCommentPageExhausted(forbidden)).assertFalse();
     });
   });
 }

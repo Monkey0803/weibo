@@ -33,7 +33,13 @@ export struct SocialListPageView {
       ListItem() { Row().height(safeArea.contentTopInsetVp) }
         .margin({ bottom: $r('app.float.space_l') })
       if (this.viewModel.state === LoadState.LOADING) {
-        ListItem() { LoadingProgress().width('100%').margin($r('app.float.space_xl')) }
+        ListItem() {
+          Row() {
+            LoadingProgress()
+              .width($r('app.float.progress_size'))
+              .height($r('app.float.progress_size'))
+          }.width('100%').justifyContent(FlexAlign.Center).padding($r('app.float.space_xl'))
+        }
       } else if (this.viewModel.state === LoadState.EMPTY) {
         ListItem() { Text($r('app.string.empty_social_list')).width('100%').textAlign(TextAlign.Center) }
       } else if (this.viewModel.state === LoadState.ERROR) {

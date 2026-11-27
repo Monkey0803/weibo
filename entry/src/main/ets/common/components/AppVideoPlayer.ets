@@ -93,6 +93,8 @@ export struct AppVideoPlayer {
   @Local private fullscreenPhase: VideoFullscreenPhase = VideoFullscreenPhase.INLINE;
   private fullscreenSession: number = 0;
   @Local private fullscreenViewSession: number = 0;
+  @Local private landscapeForced: boolean = false;
+  @Local private orientationBusy: boolean = false;
   private fullscreenCoverAppeared: boolean = false;
   private fullscreenVideoPrepared: boolean = false;
   private fullscreenTransferApplied: boolean = false;
@@ -360,6 +362,62 @@ export struct AppVideoPlayer {
     }
   }
 
+  private async toggleFullscreenOrientation(): Promise<void> {
+    const session: number = this.fullscreenSession;
+    if (!this.isFullscreenSessionActive(session) || this.orientationBusy) {
+      return;
+    }
+    this.orientationBusy = true;
+    const pendingRequest: Promise<void> | undefined = this.orientationRequest;
+    if (pendingRequest !== undefined) {
+      await pendingRequest;
+      if (this.orientationRequest === pendingRequest) {
+        this.orientationRequest = undefined;
+      }
+    }
+    if (!this.isFullscreenSessionActive(session) || this.orientationRequest !== undefined) {
+      this.orientationBusy = false;
+      return;
+    }
+    try {
+      const mainWindow: window.Window = this.hostContext().windowStage.getMainWindowSync();
+      if (!this.previousOrientationCaptured) {
+        this.previousOrientation = mainWindow.getPreferredOrientation();
+        this.previousOrientationCaptured = true;
+      }
+      const nextLandscapeForced: boolean = !this.landscapeForced;
+      const nextOrientation: window.Orientation = nextLandscapeForced
+        ? window.Orientation.LANDSCAPE : window.Orientation.PORTRAIT;
+      const request: Promise<void> = mainWindow
+        .setPreferredOrientation(nextOrientation)
+        .then((): void => {
+          this.orientationChanged = true;
+          if (this.isFullscreenSessionActive(session)) {
+            this.landscapeForced = nextLandscapeForced;
+          }
+        })
+        .catch((_error: BusinessError): void => {
+        });
+      this.orientationRequest = request;
+      await request;
+      if (this.orientationRequest === request) {
+        this.orientationRequest = undefined;
+      }
+      this.orientationBusy = false;
+      if (!this.isFullscreenSessionActive(session)) {
+        await this.restoreOrientation();
+      } else {
+        this.scheduleControlsHide();
+      }
+    } catch (_error) {
+      this.orientationRequest = undefined;
+      this.orientationBusy = false;
+      if (this.isFullscreenSessionActive(session)) {
+        this.scheduleControlsHide();
+      }
+    }
+  }
+
   private isFullscreenSessionActive(session: number): boolean {
     return !this.disposed && session === this.fullscreenSession &&
       this.fullscreenPhase === VideoFullscreenPhase.ACTIVE;
@@ -370,6 +428,8 @@ export struct AppVideoPlayer {
     if (pendingRequest !== undefined) {
       await pendingRequest;
     }
+    this.landscapeForced = false;
+    this.orientationBusy = false;
     if (!this.previousOrientationCaptured || !this.orientationChanged) {
       return;
     }
@@ -423,6 +483,8 @@ export struct AppVideoPlayer {
     this.fullscreenCoverAppeared = false;
     this.fullscreenVideoPrepared = false;
     this.fullscreenTransferApplied = false;
+    this.landscapeForced = false;
+    this.orientationBusy = false;
     this.safePause(this.inlineController);
     this.controlsVisible = true;
     this.clearControlsTimer();
@@ -695,6 +757,25 @@ export struct AppVideoPlayer {
         .fontSize($r('app.float.font_size_metric'))
         .fontColor($r('sys.color.white'))
         .fontFeature('tnum')
+      if (fullscreenMode) {
+        Button() {
+          SymbolGlyph($r('sys.symbol.arrow_clockwise'))
+            .fontSize($r('app.float.icon_size'))
+            .fontColor([$r('sys.color.white')])
+        }
+        .width($r('app.float.preview_control_size'))
+        .height($r('app.float.preview_control_size'))
+        .padding(0)
+        .buttonStyle(ButtonStyleMode.TEXTUAL)
+        .backgroundColor(Color.Transparent)
+        .enabled(this.playbackControlsEnabled() && !this.orientationBusy)
+        .accessibilityText(this.landscapeForced
+          ? $r('app.string.action_force_portrait') : $r('app.string.action_force_landscape'))
+        .onClick(() => {
+          this.holdControls();
+          this.toggleFullscreenOrientation();
+        })
+      }
       Button() {
         if (fullscreenMode) {
           SymbolGlyph($r('sys.symbol.arrow_down_right_and_arrow_up_left'))
