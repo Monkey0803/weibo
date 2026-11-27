@@ -4,7 +4,6 @@ import {
   PostRouteParam,
   RepostListRouteParam,
   Result,
-  SocialTextEntity,
   UserRouteParam,
   WeiboMediaKind,
   WeiboPost
@@ -27,8 +26,7 @@ import { AppMenu } from '../common/components/AppMenu';
 import { AppVideoPlayer } from '../common/components/AppVideoPlayer';
 import { contentActionService } from '../service/ContentActionService';
 import { SocialRichText } from '../common/components/SocialRichText';
-import { socialEntityActionService } from '../service/SocialEntityActionService';
-import { SocialEntityInteractionGuard } from '../service/SocialEntityInteractionGuard';
+import { socialEntityInteractionGuard } from '../service/SocialEntityInteractionGuard';
 
 @ComponentV2
 export struct WeiboPostCard {
@@ -40,14 +38,13 @@ export struct WeiboPostCard {
   @Local repostEditorVisible: boolean = false;
   @Local repostText: string = '';
   private suppressNextCardClick: boolean = false;
-  private entityInteractionGuard: SocialEntityInteractionGuard = new SocialEntityInteractionGuard();
 
   aboutToAppear(): void {
     postInteractionViewModel.remember(this.post);
   }
 
   private openPost(focusComments: boolean = false): void {
-    if (this.suppressNextCardClick || this.entityInteractionGuard.blocked()) {
+    if (this.suppressNextCardClick || socialEntityInteractionGuard.blocked()) {
       return;
     }
     if (this.expanded) {
@@ -61,7 +58,7 @@ export struct WeiboPostCard {
   }
 
   private openRepost(): void {
-    if (this.suppressNextCardClick || this.entityInteractionGuard.blocked()) {
+    if (this.suppressNextCardClick || socialEntityInteractionGuard.blocked()) {
       return;
     }
     const repost: WeiboPost | undefined = this.post.repost;
@@ -74,22 +71,6 @@ export struct WeiboPostCard {
   private openUser(): void {
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_PROFILE,
       new UserRouteParam(this.post.user.id, this.post.user.name)));
-  }
-
-  private openEntity(entity: SocialTextEntity): void {
-    if (!this.entityInteractionGuard.blocked()) {
-      this.entityInteractionGuard.begin();
-    }
-    this.entityInteractionGuard.end();
-    socialEntityActionService.open(entity, this.navPathStack, this.hostContext(), this.getUIContext());
-  }
-
-  private handleEntityTouch(active: boolean): void {
-    if (active) {
-      this.entityInteractionGuard.begin();
-    } else {
-      this.entityInteractionGuard.end();
-    }
   }
 
   private openReposts(): void {
@@ -454,9 +435,8 @@ export struct WeiboPostCard {
             fontSize: $r('app.float.font_size_caption'),
             fontColor: $r('app.color.hm_text_secondary'),
             brandColor: ThemeColorController.brand(),
-            pressedColor: ThemeColorController.brandPressed(),
-            onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
-            onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+            navPathStack: this.navPathStack,
+            onPlainTap: () => this.openRepost()
           })
         } else {
           SocialRichText({
@@ -466,9 +446,8 @@ export struct WeiboPostCard {
             fontColor: $r('app.color.hm_text_secondary'),
             maxLines: 3,
             brandColor: ThemeColorController.brand(),
-            pressedColor: ThemeColorController.brandPressed(),
-            onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
-            onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+            navPathStack: this.navPathStack,
+            onPlainTap: () => this.openRepost()
           })
         }
       }
@@ -636,9 +615,8 @@ export struct WeiboPostCard {
         text: this.post.text,
         entities: this.post.textEntities,
         brandColor: ThemeColorController.brand(),
-        pressedColor: ThemeColorController.brandPressed(),
-        onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
-        onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+        navPathStack: this.navPathStack,
+        onPlainTap: () => this.openPost()
       })
     } else {
       SocialRichText({
@@ -646,9 +624,8 @@ export struct WeiboPostCard {
         entities: this.post.textEntities,
         maxLines: 4,
         brandColor: ThemeColorController.brand(),
-        pressedColor: ThemeColorController.brandPressed(),
-        onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
-        onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+        navPathStack: this.navPathStack,
+        onPlainTap: () => this.openPost()
       })
       if (this.post.isLongText || this.post.text.length > 120) {
         Text($r('app.string.post_read_more'))

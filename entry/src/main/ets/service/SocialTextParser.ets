@@ -191,7 +191,7 @@ export class SocialTextParser {
   }
 
   private static collectPlainLinks(text: string, entities: SocialTextEntity[]): void {
-    const linkPattern: RegExp = new RegExp('https?:\\/\\/[^\\s]+', 'gi');
+    const linkPattern: RegExp = new RegExp('https?:\\/\\/[^\\s，。！？；：]+', 'gi');
     let match: RegExpExecArray | null = linkPattern.exec(text);
     while (match !== null) {
       const display: string = SocialTextParser.trimLinkPunctuation(match[0]);

@@ -1,4 +1,4 @@
-import { LoadState, SocialListRouteParam, SocialTextEntity, UserRouteParam,
+import { LoadState, SocialListRouteParam, UserRouteParam,
   WeiboUser } from '../model/WeiboModels';
 import { RouterConstants } from '../common/constants/RouterConstants';
 import { SocialListViewModel } from '../viewmodel/SocialListViewModel';
@@ -7,9 +7,7 @@ import { safeArea } from '../service/SafeAreaController';
 import { CommonConstants } from '../common/constants/CommonConstants';
 import { SocialRichText } from '../common/components/SocialRichText';
 import { ThemeColorController } from '../service/ThemeColorController';
-import { socialEntityActionService } from '../service/SocialEntityActionService';
-import { SocialEntityInteractionGuard } from '../service/SocialEntityInteractionGuard';
-import { common } from '@kit.AbilityKit';
+import { socialEntityInteractionGuard } from '../service/SocialEntityInteractionGuard';
 
 @ComponentV2
 export struct SocialListPageView {
@@ -17,36 +15,17 @@ export struct SocialListPageView {
   @Param routeParam: SocialListRouteParam = new SocialListRouteParam('', 0, '');
   private viewModel: SocialListViewModel = new SocialListViewModel();
   @Local viewportHeightVp: number = 0;
-  private entityInteractionGuard: SocialEntityInteractionGuard = new SocialEntityInteractionGuard();
 
   aboutToAppear(): void {
     this.viewModel.load(this.routeParam.userId, this.routeParam.kind);
   }
 
   private openUser(user: WeiboUser): void {
-    if (this.entityInteractionGuard.blocked()) {
+    if (socialEntityInteractionGuard.blocked()) {
       return;
     }
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_PROFILE,
       new UserRouteParam(user.id, user.name)));
-  }
-
-  private openEntity(entity: SocialTextEntity): void {
-    if (!this.entityInteractionGuard.blocked()) {
-      this.entityInteractionGuard.begin();
-    }
-    this.entityInteractionGuard.end();
-    const hostContext: common.UIAbilityContext =
-      this.getUIContext().getHostContext() as common.UIAbilityContext;
-    socialEntityActionService.open(entity, this.navPathStack, hostContext, this.getUIContext());
-  }
-
-  private handleEntityTouch(active: boolean): void {
-    if (active) {
-      this.entityInteractionGuard.begin();
-    } else {
-      this.entityInteractionGuard.end();
-    }
   }
 
   build() {
@@ -78,9 +57,8 @@ export struct SocialListPageView {
                   fontColor: $r('app.color.hm_text_secondary'),
                   maxLines: 2,
                   brandColor: ThemeColorController.brand(),
-                  pressedColor: ThemeColorController.brandPressed(),
-                  onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity),
-                  onEntityTouchChange: (active: boolean) => this.handleEntityTouch(active)
+                  navPathStack: this.navPathStack,
+                  onPlainTap: () => this.openUser(user)
                 })
               }
             }.layoutWeight(1).alignItems(HorizontalAlign.Start)

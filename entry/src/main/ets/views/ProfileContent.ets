@@ -1,4 +1,4 @@
-import { LoadState, Result, SocialListKind, SocialListRouteParam, SocialTextEntity,
+import { LoadState, Result, SocialListKind, SocialListRouteParam,
   WeiboPost } from '../model/WeiboModels';
 import { ProfileViewModel } from '../viewmodel/ProfileViewModel';
 import { WeiboPostCard } from './WeiboPostCard';
@@ -9,8 +9,6 @@ import { notificationService } from '../service/NotificationService';
 import { ThemeColorController } from '../service/ThemeColorController';
 import { BreakpointConstants } from '../common/constants/BreakpointConstants';
 import { SocialRichText } from '../common/components/SocialRichText';
-import { socialEntityActionService } from '../service/SocialEntityActionService';
-import { common } from '@kit.AbilityKit';
 
 @ComponentV2
 export struct ProfileContent {
@@ -24,12 +22,6 @@ export struct ProfileContent {
       $r('app.string.following_title') : $r('app.string.followers_title');
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_SOCIAL_LIST,
       new SocialListRouteParam(this.viewModel.user.id, kind, title)));
-  }
-
-  private openEntity(entity: SocialTextEntity): void {
-    const hostContext: common.UIAbilityContext =
-      this.getUIContext().getHostContext() as common.UIAbilityContext;
-    socialEntityActionService.open(entity, this.navPathStack, hostContext, this.getUIContext());
   }
 
   private async toggleFollow(): Promise<void> {
@@ -101,8 +93,7 @@ export struct ProfileContent {
           fontColor: $r('app.color.hm_text_secondary'),
           maxLines: 2,
           brandColor: ThemeColorController.brand(),
-          pressedColor: ThemeColorController.brandPressed(),
-          onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+          navPathStack: this.navPathStack
         })
       }
 

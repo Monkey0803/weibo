@@ -16,7 +16,7 @@ import {
 import { appSettings } from '../model/AppSettings';
 import { EntitySearchRouteParam, FeedKind, ImagePreviewRouteParam, LoadState, PostRouteParam,
   RepostListRouteParam, SearchKind,
-  SocialListKind, SocialListRouteParam, SocialTextEntity, UserRouteParam,
+  SocialListKind, SocialListRouteParam, UserRouteParam,
   VideoRouteParam } from '../model/WeiboModels';
 import { settingsViewModel } from '../viewmodel/SettingsViewModel';
 import { authViewModel } from '../viewmodel/AuthViewModel';
@@ -62,7 +62,6 @@ import { RepostListPageView } from '../views/RepostListPageView';
 import { ComposePageView } from '../views/ComposePageView';
 import { EntitySearchPageView } from '../views/EntitySearchPageView';
 import { SocialRichText } from '../common/components/SocialRichText';
-import { socialEntityActionService } from '../service/SocialEntityActionService';
 
 @Entry
 @ComponentV2
@@ -124,12 +123,6 @@ struct Index {
         console.error('closeCustomDialog (notice) failed: ' + error.code.toString());
       }
     }
-  }
-
-  private openEntity(entity: SocialTextEntity): void {
-    const hostContext: common.UIAbilityContext =
-      this.getUIContext().getHostContext() as common.UIAbilityContext;
-    socialEntityActionService.open(entity, this.navPathStack, hostContext, this.getUIContext());
   }
 
   private async presentNotice(request: NoticeRequest): Promise<void> {
@@ -462,8 +455,7 @@ struct Index {
               fontColor: $r('app.color.hm_text_secondary'),
               maxLines: 1,
               brandColor: ThemeColorController.brand(),
-              pressedColor: ThemeColorController.brandPressed(),
-              onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+              navPathStack: this.navPathStack
             })
           }
         }

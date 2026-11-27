@@ -1,4 +1,19 @@
+import { common } from '@kit.AbilityKit';
 import { SocialTextEntity } from '../../model/WeiboModels';
+import { socialEntityActionService } from '../../service/SocialEntityActionService';
+import { socialEntityInteractionGuard } from '../../service/SocialEntityInteractionGuard';
+
+class SocialRichTextPart {
+  readonly key: string;
+  readonly text: string;
+  readonly entity?: SocialTextEntity;
+
+  constructor(key: string, text: string, entity?: SocialTextEntity) {
+    this.key = key;
+    this.text = text;
+    this.entity = entity;
+  }
+}
 
 @ComponentV2
 export struct SocialRichText {
@@ -9,76 +24,70 @@ export struct SocialRichText {
   @Param lineHeight: Resource = $r('app.float.space_xl');
   @Param maxLines: number = 100000;
   @Param brandColor: ResourceColor = $r('app.color.hm_brand');
-  @Param pressedColor: ResourceColor = $r('app.color.hm_brand_pressed');
-  @Event onEntityTap: (entity: SocialTextEntity) => void = (_entity: SocialTextEntity): void => {};
-  @Event onEntityTouchChange: (active: boolean) => void = (_active: boolean): void => {};
-  @Local pressedStart: number = -1;
-  private controller: TextController = new TextController();
+  @Param navPathStack: NavPathStack = new NavPathStack();
+  @Event onPlainTap: () => void = (): void => {};
 
-  aboutToAppear(): void {
-    this.refreshStyledText();
-  }
-
-  @Monitor('text', 'entities', 'brandColor', 'pressedColor', 'pressedStart')
-  onContentChanged(): void {
-    this.refreshStyledText();
-  }
-
-  private styledText(): MutableStyledString {
-    const styled: MutableStyledString = new MutableStyledString(this.text);
+  private parts(): SocialRichTextPart[] {
+    const parts: SocialRichTextPart[] = [];
+    let cursor: number = 0;
     for (let index: number = 0; index < this.entities.length; index++) {
       const entity: SocialTextEntity = this.entities[index];
-      if (entity.start < 0 || entity.length <= 0 || entity.start + entity.length > this.text.length) {
+      const end: number = entity.start + entity.length;
+      if (entity.start < cursor || entity.length <= 0 || end > this.text.length) {
         continue;
       }
-      const textStyle: SpanStyle = {
-        start: entity.start,
-        length: entity.length,
-        styledKey: StyledStringKey.FONT,
-        styledValue: new TextStyle({
-          fontColor: this.pressedStart === entity.start ? this.pressedColor : this.brandColor,
-          fontWeight: FontWeight.Medium
-        })
-      };
-      const gestureStyle: SpanStyle = {
-        start: entity.start,
-        length: entity.length,
-        styledKey: StyledStringKey.GESTURE,
-        styledValue: new GestureStyle({
-          onClick: (_event: ClickEvent): void => {
-            this.pressedStart = -1;
-            this.onEntityTap(entity);
-          },
-          onTouch: (event: TouchEvent): void => {
-            event.stopPropagation();
-            if (event.type === TouchType.Down) {
-              this.pressedStart = entity.start;
-              this.onEntityTouchChange(true);
-            } else if (event.type === TouchType.Up || event.type === TouchType.Cancel) {
-              this.pressedStart = -1;
-              this.onEntityTouchChange(false);
-            }
-          }
-        })
-      };
-      styled.setStyle(textStyle);
-      styled.setStyle(gestureStyle);
+      if (entity.start > cursor) {
+        parts.push(new SocialRichTextPart(`plain-${cursor}-${entity.start}`,
+          this.text.substring(cursor, entity.start)));
+      }
+      parts.push(new SocialRichTextPart(`entity-${entity.start}-${end}`,
+        this.text.substring(entity.start, end), entity));
+      cursor = end;
     }
-    return styled;
+    if (cursor < this.text.length) {
+      parts.push(new SocialRichTextPart(`plain-${cursor}-${this.text.length}`, this.text.substring(cursor)));
+    }
+    return parts;
   }
 
-  private refreshStyledText(): void {
-    this.controller.setStyledString(this.styledText());
+  private openEntity(entity: SocialTextEntity): void {
+    socialEntityInteractionGuard.blockCurrentClick();
+    const hostContext: common.UIAbilityContext =
+      this.getUIContext().getHostContext() as common.UIAbilityContext;
+    socialEntityActionService.open(entity, this.navPathStack, hostContext, this.getUIContext());
   }
 
   build() {
-    Text(this.text, { controller: this.controller })
-      .fontSize(this.fontSize)
-      .fontColor(this.fontColor)
-      .lineHeight(this.lineHeight)
-      .fontWeight(FontWeight.Regular)
-      .maxLines(this.maxLines)
-      .textOverflow({ overflow: TextOverflow.Ellipsis })
-      .width('100%')
+    Text() {
+      ForEach(this.parts(), (part: SocialRichTextPart) => {
+        if (part.entity !== undefined) {
+          Span(part.text)
+            .fontColor(this.brandColor)
+            .fontWeight(FontWeight.Medium)
+            .onClick((_event: ClickEvent): void => {
+              this.openEntity(part.entity as SocialTextEntity);
+            })
+        } else {
+          Span(part.text)
+        }
+      }, (part: SocialRichTextPart): string => part.key)
+    }
+    .fontSize(this.fontSize)
+    .fontColor(this.fontColor)
+    .lineHeight(this.lineHeight)
+    .fontWeight(FontWeight.Regular)
+    .maxLines(this.maxLines)
+    .textOverflow({ overflow: TextOverflow.Ellipsis })
+    .width('100%')
+    .onTouch((event: TouchEvent): void => {
+      if (event.type === TouchType.Up) {
+        event.stopPropagation();
+      }
+    })
+    .onClick((): void => {
+      if (!socialEntityInteractionGuard.blocked()) {
+        this.onPlainTap();
+      }
+    })
   }
 }

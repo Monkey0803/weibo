@@ -16,7 +16,14 @@ export class SocialEntityInteractionGuard {
     }, 0);
   }
 
+  blockCurrentClick(): void {
+    this.begin();
+    this.end();
+  }
+
   blocked(): boolean {
     return this.active;
   }
 }
+
+export const socialEntityInteractionGuard: SocialEntityInteractionGuard = new SocialEntityInteractionGuard();

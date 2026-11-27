@@ -1,4 +1,4 @@
-import { CommentLoadMode, LoadState, PostRouteParam, SocialTextEntity,
+import { CommentLoadMode, LoadState, PostRouteParam,
   UserRouteParam, WeiboComment,
   WeiboPost, WeiboUser } from '../model/WeiboModels';
 import { CommentSubmitOutcome, DetailViewModel } from '../viewmodel/DetailViewModel';
@@ -20,7 +20,6 @@ import { MenuItemSpec, MenuSpec } from '../common/components/MenuSpec';
 import { AppMenu } from '../common/components/AppMenu';
 import { contentActionService } from '../service/ContentActionService';
 import { SocialRichText } from '../common/components/SocialRichText';
-import { socialEntityActionService } from '../service/SocialEntityActionService';
 
 const COMMENT_INPUT_ID: string = 'detail-comment-input';
 
@@ -99,10 +98,6 @@ export struct DetailPageView {
   private openUser(user: WeiboUser): void {
     this.navPathStack.pushPath(new NavPathInfo(RouterConstants.PAGE_PROFILE,
       new UserRouteParam(user.id, user.name)));
-  }
-
-  private openEntity(entity: SocialTextEntity): void {
-    socialEntityActionService.open(entity, this.navPathStack, this.hostContext(), this.getUIContext());
   }
 
   private hostContext(): common.UIAbilityContext {
@@ -270,8 +265,7 @@ export struct DetailPageView {
           text: comment.text,
           entities: comment.textEntities,
           brandColor: ThemeColorController.brand(),
-          pressedColor: ThemeColorController.brandPressed(),
-          onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+          navPathStack: this.navPathStack
         })
         Text(comment.createdAt)
           .fontSize($r('app.float.font_size_metric'))
@@ -294,8 +288,7 @@ export struct DetailPageView {
               fontSize: $r('app.float.font_size_caption'),
               fontColor: $r('app.color.hm_text_primary'),
               brandColor: ThemeColorController.brand(),
-              pressedColor: ThemeColorController.brandPressed(),
-              onEntityTap: (entity: SocialTextEntity) => this.openEntity(entity)
+              navPathStack: this.navPathStack
             })
           }.width('100%').alignItems(HorizontalAlign.Start).padding($r('app.float.space_s'))
             .backgroundColor($r('app.color.hm_search_background')).borderRadius($r('app.float.radius_small'))
